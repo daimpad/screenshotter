@@ -1,0 +1,11 @@
+# Windows-Batchdateien brauchen CRLF, sonst bricht cmd.exe bei Labels und Sprüngen.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Alles andere mit LF im Repository.
+*.js   text eol=lf
+*.json text eol=lf
+*.css  text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.yml  text eol=lf

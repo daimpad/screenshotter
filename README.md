@@ -15,22 +15,66 @@ generiert.
 
 ## Inhalt
 
-1. [Was dabei herauskommt](#was-dabei-herauskommt)
-2. [Voraussetzungen](#voraussetzungen)
-3. [Installation](#installation)
-4. [Schnellstart](#schnellstart)
-5. [Eingabe: woher die URLs kommen](#eingabe-woher-die-urls-kommen)
-6. [Alle CLI-Optionen](#alle-cli-optionen)
-7. [Rezepte](#rezepte)
-8. [Der Report im Detail](#der-report-im-detail)
-9. [report.json](#reportjson)
-10. [Veröffentlichen](#veröffentlichen)
-11. [Automatisieren](#automatisieren)
-12. [Tests](#tests)
-13. [Projektstruktur](#projektstruktur)
-14. [Fehlerbehebung](#fehlerbehebung)
-15. [Exit-Codes](#exit-codes)
-16. [Grenzen](#grenzen)
+1. [Windows: einfach doppelklicken](#windows-einfach-doppelklicken)
+2. [Was dabei herauskommt](#was-dabei-herauskommt)
+3. [Voraussetzungen](#voraussetzungen)
+4. [Installation](#installation)
+5. [Schnellstart](#schnellstart)
+6. [Eingabe: woher die URLs kommen](#eingabe-woher-die-urls-kommen)
+7. [Alle CLI-Optionen](#alle-cli-optionen)
+8. [Rezepte](#rezepte)
+9. [Der Report im Detail](#der-report-im-detail)
+10. [report.json](#reportjson)
+11. [Veröffentlichen](#veröffentlichen)
+12. [Automatisieren](#automatisieren)
+13. [Tests](#tests)
+14. [Projektstruktur](#projektstruktur)
+15. [Fehlerbehebung](#fehlerbehebung)
+16. [Exit-Codes](#exit-codes)
+17. [Grenzen](#grenzen)
+
+---
+
+## Windows: einfach doppelklicken
+
+Wer nicht mit der Kommandozeile arbeiten möchte, startet alles über
+**`screenshotter.cmd`** — Doppelklick genügt.
+
+Der Starter erledigt der Reihe nach:
+
+1. **Node.js prüfen.** Fehlt es, wird das erklärt und auf Wunsch die
+   Downloadseite geöffnet. (Node ist die einzige Software, die man von Hand
+   installieren muss — die LTS-Version mit Standardeinstellungen reicht.)
+2. **Abhängigkeiten installieren** — nur beim allerersten Start, dauert ein bis
+   zwei Minuten.
+3. **Chromium herunterladen** — ebenfalls nur einmal, ca. 150 MB.
+4. **Nach den URLs fragen.** Ein kleines Menü zeigt, wie viele URLs in `urls.txt`
+   stehen, und bietet an, die Datei im Editor zu öffnen:
+
+   ```
+     In urls.txt stehen aktuell 3 URL(s).
+
+       [1]  Screenshots jetzt erstellen
+       [2]  urls.txt bearbeiten
+       [3]  Beenden
+
+       Auswahl:
+   ```
+5. **Screenshots erstellen** und **den Report im Browser öffnen.**
+
+Ab dem zweiten Start entfallen die Schritte 2 und 3 — dann sind es nur noch
+Doppelklick, `1` drücken, fertig.
+
+**Praktisch:** Rechtsklick auf `screenshotter.cmd` → *Verknüpfung erstellen*, die
+Verknüpfung auf den Desktop ziehen. Dann startet der ganze Ablauf von dort.
+
+> **Falls Windows warnt.** Wurde das Projekt als ZIP heruntergeladen, markiert
+> Windows die Dateien als „aus dem Internet“. Einmal Rechtsklick auf
+> `screenshotter.cmd` → *Eigenschaften* → unten *Zulassen* ankreuzen → *OK*.
+> Nach einem `git clone` passiert das nicht.
+
+Der Starter ist für Windows 10 und 11 ausgelegt. Unter macOS und Linux läuft
+dasselbe über `node screenshotter.js` (siehe [Schnellstart](#schnellstart)).
 
 ---
 
@@ -71,6 +115,9 @@ Für den **Report selbst** wird nichts davon gebraucht — er ist reines HTML/CS
 ---
 
 ## Installation
+
+Unter Windows übernimmt das [`screenshotter.cmd`](#windows-einfach-doppelklicken)
+von selbst. Von Hand geht es so:
 
 ```bash
 git clone https://github.com/daimpad/screenshotter.git
@@ -456,6 +503,7 @@ Sortierung, Filter, Lightbox und das Kartenlayout im echten Chromium.
 ## Projektstruktur
 
 ```
+screenshotter.cmd         Starter für Windows (Doppelklick, richtet alles ein)
 screenshotter.js          Einstiegspunkt: Ablauf, Konsolenausgabe, Exit-Code
 lib/
   cli.js                  Optionen, Validierung, Hilfetext
@@ -480,6 +528,30 @@ Abhängigkeit wie `sharp` und liefert exakt die gewünschte Kachelgröße.
 ---
 
 ## Fehlerbehebung
+
+### Rund um `screenshotter.cmd` (Windows)
+
+**Das Fenster blinkt kurz auf und schließt sich sofort**
+Bei Fehlern hält der Starter selbst an — schließt sich das Fenster trotzdem
+sofort, hilft der direkte Blick auf die Meldung: Explorer öffnen, in die
+Adressleiste `cmd` eintippen, Enter, dann `screenshotter.cmd` eingeben.
+
+**`'node' ist nicht als interner oder externer Befehl erkannt`**
+Node.js ist installiert, aber die Eingabeaufforderung kennt es noch nicht.
+Einmal ab- und wieder anmelden oder den Rechner neu starten, dann greift der
+neue Suchpfad.
+
+**Windows meldet „Der Computer wurde durch Windows geschützt“**
+Das betrifft Dateien, die als Download markiert sind: Rechtsklick auf
+`screenshotter.cmd` → *Eigenschaften* → *Zulassen* → *OK*. Alternativ das
+Projekt per `git clone` holen statt als ZIP.
+
+**Umlaute erscheinen als Kästchen oder Fragezeichen**
+Der Starter stellt die Konsole auf UTF-8 um. In der alten
+Eingabeaufforderung fehlen manchen Schriftarten trotzdem Zeichen wie `→`.
+Windows Terminal (unter Windows 11 der Standard) stellt alles korrekt dar.
+
+### Allgemein
 
 **`Chromium konnte nicht gestartet werden` / `Executable doesn't exist`**
 Der Browser fehlt: `npx playwright install chromium`. Auf Servern zusätzlich die
