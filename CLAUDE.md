@@ -25,14 +25,16 @@ Die drei Leitplanken, die jede Änderung respektieren muss:
 ## Befehle
 
 ```bash
-npm test                    # alles (48 Tests)
+npm test                    # alles (59 Tests)
 npm run test:unit           # nur Unit-Tests, brauchen keinen Browser
 npm run test:e2e            # kompletter CLI-Lauf + Report im echten Chromium
+npm run test:ui             # Weboberfläche: Server, API, Absicherung, Browser
 node --test test/units.test.js --test-name-pattern "diagnose"
 
 node screenshotter.js --help
 node screenshotter.js --init
 node screenshotter.js https://example.com --out /tmp/probe --open
+node screenshotter.js --serve --open
 ```
 
 `node --test test/` funktioniert **nicht** — Node hält das Verzeichnis für einen
@@ -48,9 +50,15 @@ screenshotter.js       Ablaufsteuerung, Konsolenausgabe, Exit-Codes
   lib/diagnose.js      Chromium-Fehlercode → Klartext + Lösungshinweis
   lib/progress.js      Reporter: Farben, Symbole, Fortschrittsbalken
   lib/report.js        index.html + report.json, kopiert lib/assets/*
+  lib/server.js        Weboberfläche: HTTP-API, SSE-Fortschritt, Absicherung
   lib/open.js          Datei im Standardprogramm öffnen
   lib/errors.js        UserError (führt zu Exit-Code 2)
 ```
+
+Es gibt zwei Einstiege in denselben Motor: die Kommandozeile und
+`--serve`. Der Server ruft `captureAll()` und `writeReport()` genauso auf wie
+`screenshotter.js` — neue Funktionen gehören deshalb in `lib/`, nicht in einen
+der beiden Einstiege, sonst kennt sie nur die Hälfte der Nutzer.
 
 Datenfluss: `collectTargets()` → `captureAll()` → Ergebnisobjekte →
 `writeReport()`. Das Ergebnisobjekt pro URL ist der zentrale Vertrag; seine
@@ -117,6 +125,29 @@ mit LF verschluckt sich `cmd.exe` an Labels) und ausschließlich `goto` statt
 lässt sich hier nicht ausführen — Änderungen daran immer statisch prüfen:
 Sprungziele, ausgeglichene Anführungszeichen, escapte Klammern.
 
+**`display` überstimmt `[hidden]` — überall.** Deshalb steht in `report.css`
+und `ui.css` je ein `[hidden] { display: none !important; }` ganz oben. Ohne das
+blieben Felder und Bereiche sichtbar, die das JavaScript ausblendet; die
+Weboberfläche zeigte anfangs das JPEG-Qualitätsfeld und den Abbrechen-Knopf
+dauerhaft an.
+
+**`step` an Zahlenfeldern ist eine Falle.** Ein Vorgabewert, der nicht auf das
+Raster passt (z.B. `value="80"` bei `min="1" step="5"`), macht das Formular
+ungültig. Liegt das Feld dann in einem ausgeblendeten Bereich, blockiert der
+Browser das Absenden **ohne sichtbare Meldung**. Das Formular trägt deshalb
+`novalidate`, nicht benutzte Felder werden `disabled`, und geprüft wird
+serverseitig in `applyRunOptions()`.
+
+**Der Server ist bewusst eng geschnürt.** Bindung an `127.0.0.1`, Prüfung des
+`Host`-Headers gegen DNS-Rebinding, `resolveWithin()` gegen Pfad-Traversal,
+Allowlist für ausgelieferte Assets, 1-MB-Grenze für Anfragen, ein Lauf zur Zeit
+und keine Proxy-Angabe in `/api/state`. Wer hier etwas ändert, sollte
+`test/server.test.js` gelesen haben.
+
+**`fetch` kann den `Host`-Header nicht setzen.** Für Tests gegen die
+Rebinding-Prüfung muss `node:http` direkt verwendet werden — sonst prüft der
+Test nichts.
+
 **Keine rohen ESC-Bytes im Quelltext.** ANSI-Sequenzen als `\u001b` schreiben,
 nicht als literales Steuerzeichen.
 
@@ -125,10 +156,16 @@ nicht als literales Steuerzeichen.
 * `test/units.test.js` — reine Logik, kein Browser, läuft in Millisekunden.
 * `test/e2e.test.js` — startet `test/fixtures/server.js`, ruft das CLI als
   Unterprozess auf und prüft den Report anschließend im echten Chromium.
+* `test/server.test.js` — startet `--serve` als Unterprozess, bedient das
+  Formular im Browser und klopft die API ab.
 * `test/fixtures/server.js` — deterministische Seiten: lang mit Lazy-Loading,
   kurz, Weiterleitung, 404, ohne Viewport-Meta, Sonderzeichen im Titel. Dazu
   `reservedDeadOrigin()` für einen reproduzierbaren Verbindungsfehler und
   `pngSize()` zum Auslesen der Bildmaße.
+
+Testserver immer auf einen über `freePort()` ermittelten Port legen, nie auf
+eine feste Nummer: ein abgestürzter Testlauf hinterlässt sonst einen Prozess,
+und der nächste Lauf redet unbemerkt mit dem alten Server.
 
 Für einen Fehlerfall nie auf DNS oder Ports wie 1 setzen — Chromium sperrt
 bestimmte Ports (`ERR_UNSAFE_PORT`). `reservedDeadOrigin()` bindet stattdessen

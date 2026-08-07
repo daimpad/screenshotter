@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>screenshotter</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233b5bdb'/%3E%3Crect x='6' y='9' width='20' height='15' rx='2.5' fill='%23fff'/%3E%3Ccircle cx='16' cy='16.5' r='4' fill='%233b5bdb'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/report.css">
+  <link rel="stylesheet" href="/assets/ui.css">
+  <script>
+    try { var t = localStorage.getItem('screenshotter-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+</head>
+<body class="ui">
+  <header class="site-header">
+    <div class="wrap site-header__top">
+      <div>
+        <h1 class="site-title">📸 screenshotter</h1>
+        <p class="site-subtitle">URLs eintragen, Screenshots erstellen, Report ansehen.</p>
+      </div>
+      <button type="button" class="theme-toggle" id="theme-toggle">
+        <span aria-hidden="true">◐</span><span data-theme-label>System</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap ui-main">
+    <!-- novalidate: der Server prüft ohnehin alles und liefert deutsche Meldungen.
+         Native Validierung würde bei einem ausgeblendeten ungültigen Feld das
+         Absenden stumm blockieren — ohne sichtbaren Hinweis. -->
+    <form id="run-form" class="panel" autocomplete="off" novalidate>
+      <div class="field">
+        <div class="field__head">
+          <label for="urls"><strong>URLs</strong> — eine pro Zeile</label>
+          <span class="field__meta" id="url-count">0 URLs</span>
+        </div>
+        <textarea id="urls" name="urls" rows="8" spellcheck="false"
+          placeholder="https://example.com&#10;example.com/preise | Preisübersicht&#10;&#10;# Zeilen mit # sind Kommentare"></textarea>
+        <p class="field__hint">
+          Fehlt <code>https://</code>, wird es ergänzt. Nach einem <code>|</code> darf ein Anzeigename stehen.
+          <button type="button" class="linkish" id="load-urls">Aus Datei laden</button>
+          <button type="button" class="linkish" id="save-urls">In Datei speichern</button>
+          <span class="field__meta" id="urls-file"></span>
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <div class="field">
+          <label for="preset">Gerät</label>
+          <select id="preset" name="preset">
+            <option value="desktop">Desktop — 1440 × 900</option>
+            <option value="laptop">Laptop — 1280 × 800</option>
+            <option value="tablet">Tablet — 820 × 1180 @2x</option>
+            <option value="mobile">Smartphone — 390 × 844 @2x</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="format">Bildformat</label>
+          <select id="format" name="format">
+            <option value="png">PNG — beste Qualität</option>
+            <option value="jpeg">JPEG — kleinere Dateien</option>
+          </select>
+        </div>
+
+        <div class="field" id="quality-field" hidden>
+          <label for="quality">JPEG-Qualität</label>
+          <input type="number" id="quality" name="quality" min="1" max="100" disabled>
+        </div>
+
+        <div class="field">
+          <label for="concurrency">Parallele Seiten</label>
+          <input type="number" id="concurrency" name="concurrency" min="1" max="32">
+        </div>
+
+        <div class="field">
+          <label for="title">Titel des Reports</label>
+          <input type="text" id="title" name="title" maxlength="200">
+        </div>
+
+        <div class="field">
+          <label for="out">Zielordner</label>
+          <input type="text" id="out" name="out" maxlength="500" spellcheck="false">
+        </div>
+      </div>
+
+      <details class="advanced">
+        <summary>Erweiterte Einstellungen</summary>
+        <div class="grid-3">
+          <div class="field">
+            <label for="hide">Elemente ausblenden</label>
+            <input type="text" id="hide" name="hide" spellcheck="false" placeholder="#cookie-banner, .ad">
+          </div>
+          <div class="field">
+            <label for="timeout">Timeout je Seite (ms)</label>
+            <input type="number" id="timeout" name="timeout" min="1000" max="600000">
+          </div>
+          <div class="field">
+            <label for="delay">Wartezeit vor dem Shot (ms)</label>
+            <input type="number" id="delay" name="delay" min="0" max="60000">
+          </div>
+          <div class="field">
+            <label for="retries">Wiederholungen</label>
+            <input type="number" id="retries" name="retries" min="0" max="10">
+          </div>
+          <div class="field">
+            <label for="waitUntil">Warten bis</label>
+            <select id="waitUntil" name="waitUntil">
+              <option value="load">load — Seite geladen</option>
+              <option value="domcontentloaded">domcontentloaded — früher</option>
+              <option value="networkidle">networkidle — später, gründlicher</option>
+              <option value="commit">commit — sofort</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="colorScheme">Farbschema der Seiten</label>
+            <select id="colorScheme" name="colorScheme">
+              <option value="">wie das System</option>
+              <option value="light">hell erzwingen</option>
+              <option value="dark">dunkel erzwingen</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="switches">
+          <label class="switch"><input type="checkbox" id="fullPage" checked> Ganze Seitenhöhe aufnehmen</label>
+          <label class="switch"><input type="checkbox" id="autoScroll" checked> Vorab scrollen (Lazy-Loading auslösen)</label>
+          <label class="switch"><input type="checkbox" id="stabilize" checked> Animationen einfrieren</label>
+          <label class="switch"><input type="checkbox" id="thumbnails" checked> Vorschaubilder erzeugen</label>
+        </div>
+      </details>
+
+      <div class="actions">
+        <button type="submit" class="button button--primary" id="start">Screenshots erstellen</button>
+        <button type="button" class="button" id="cancel" hidden>Abbrechen</button>
+        <span class="actions__note" id="form-note"></span>
+      </div>
+    </form>
+
+    <section class="panel run" id="run" hidden aria-live="polite">
+      <div class="run__head">
+        <h2 class="run__title" id="run-title">Läuft …</h2>
+        <span class="run__counter" id="run-counter"></span>
+      </div>
+
+      <div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="meter">
+        <div class="meter__fill" id="meter-fill"></div>
+      </div>
+
+      <p class="run__message" id="run-message" hidden></p>
+
+      <ol class="results" id="results"></ol>
+
+      <div class="run__footer" id="run-footer" hidden>
+        <a class="button button--primary" id="open-report" href="/report/" target="_blank" rel="noopener">Report öffnen</a>
+        <span class="run__summary" id="run-summary"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <strong>screenshotter</strong> <span id="version"></span> · läuft lokal auf diesem Rechner ·
+      dieselben Einstellungen gibt es auf der Kommandozeile mit <code>node screenshotter.js --help</code>
+    </div>
+  </footer>
+
+  <script src="/assets/ui.js" defer></script>
+</body>
+</html>

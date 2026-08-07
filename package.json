@@ -1,6 +1,6 @@
 {
   "name": "screenshotter",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Leichtgewichtiges CLI für Full-Page-Screenshots einer URL-Liste plus statischem HTML-Report.",
   "type": "module",
@@ -19,7 +19,9 @@
     "test:e2e": "node --test test/e2e.test.js",
     "browser": "playwright install chromium",
     "browser:deps": "playwright install --with-deps chromium",
-    "clean": "node -e \"import('node:fs').then(fs=>{for(const p of ['screenshots','index.html','report.json','assets'])fs.rmSync(p,{recursive:true,force:true});console.log('output entfernt')})\""
+    "clean": "node -e \"import('node:fs').then(fs=>{for(const p of ['screenshots','index.html','report.json','assets'])fs.rmSync(p,{recursive:true,force:true});console.log('output entfernt')})\"",
+    "test:ui": "node --test test/server.test.js",
+    "serve": "node screenshotter.js --serve --open"
   },
   "keywords": [
     "screenshot",

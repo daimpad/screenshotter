@@ -53,14 +53,27 @@ echo.
 node -e "const fs=require('fs');const l=fs.readFileSync('urls.txt','utf8').split(/\r?\n/).map(s=>s.trim()).filter(s=>s&&!s.startsWith('#')&&!s.startsWith('//'));console.log('   In urls.txt stehen aktuell '+l.length+' URL(s).');process.exit(l.length?0:1)"
 if errorlevel 1 goto NO_URLS
 echo.
-echo     [1]  Screenshots jetzt erstellen
-echo     [2]  urls.txt bearbeiten
-echo     [3]  Beenden
+echo     [1]  Weboberflaeche oeffnen  ^(empfohlen^)
+echo     [2]  Screenshots direkt erstellen
+echo     [3]  urls.txt im Editor bearbeiten
+echo     [4]  Beenden
 echo.
-choice /c 123 /n /m "   Auswahl: "
-if errorlevel 3 goto ENDE
-if errorlevel 2 goto EDIT
-goto RUN
+choice /c 1234 /n /m "   Auswahl: "
+if errorlevel 4 goto ENDE
+if errorlevel 3 goto EDIT
+if errorlevel 2 goto RUN
+goto WEB
+
+:WEB
+echo.
+echo   Die Weboberflaeche startet und oeffnet sich im Browser.
+echo   Dieses Fenster bitte offen lassen - mit Strg+C wird beendet.
+echo.
+node screenshotter.js --serve --open
+echo.
+echo   Fenster schliessen mit einer beliebigen Taste...
+pause >nul
+goto ENDE
 
 :NO_URLS
 echo.
