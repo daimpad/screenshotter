@@ -4,29 +4,63 @@
  * statischer HTML-Report (index.html) ohne Datenbank und ohne Framework.
  */
 
-import { mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
 import { captureAll } from './lib/capture.js';
-import { helpText, parseCliArgs, VERSION } from './lib/cli.js';
+import { helpText, parseCliArgs, PRESETS, VERSION } from './lib/cli.js';
 import { UserError } from './lib/errors.js';
+import { openInDefaultApp } from './lib/open.js';
+import { Reporter } from './lib/progress.js';
 import { classify, formatBytes, formatDuration, writeReport } from './lib/report.js';
 import { collectTargets } from './lib/urls.js';
 
-const USE_COLOR = process.stdout.isTTY && !process.env.NO_COLOR;
+const URLS_TEMPLATE = `# urls.txt — eine URL pro Zeile.
+#
+#   * Zeilen ab "#" oder "//" sind Kommentare, leere Zeilen werden übersprungen.
+#   * Fehlt das Schema, wird https:// ergänzt (example.com -> https://example.com).
+#   * Optionaler Anzeigename nach einem senkrechten Strich: URL | Name
+#   * Doppelte URLs werden automatisch nur einmal aufgenommen.
 
-const paint = (code, text) => (USE_COLOR ? `\u001b[${code}m${text}\u001b[0m` : text);
-const dim = (text) => paint('2', text);
-const bold = (text) => paint('1', text);
-const green = (text) => paint('32', text);
-const yellow = (text) => paint('33', text);
-const red = (text) => paint('31', text);
+https://example.com | Beispielseite
+`;
 
-function stateColor(state, text) {
-  if (state === 'ok') return green(text);
-  if (state === 'redirect') return yellow(text);
-  return red(text);
+/** Legt eine urls.txt-Vorlage an, ohne eine vorhandene zu überschreiben. */
+async function initUrlsFile(filePath, reporter) {
+  if (existsSync(filePath)) {
+    reporter.line(`  ${filePath} gibt es schon — nichts geändert.`);
+    return 0;
+  }
+  await writeFile(filePath, URLS_TEMPLATE, 'utf8');
+  reporter.line(`  ${reporter.green(reporter.symbols.ok)} ${filePath} angelegt.`);
+  reporter.line('');
+  reporter.line('  Jetzt die Datei mit deinen URLs füllen und dann starten:');
+  reporter.line(`  ${reporter.bold('node screenshotter.js --open')}`);
+  return 0;
+}
+
+/** Eine abgeschlossene URL als Konsolenzeile. */
+function resultLine(reporter, result) {
+  const state = classify(result);
+  const symbol =
+    state === 'ok'
+      ? reporter.green(reporter.symbols.ok)
+      : state === 'redirect'
+        ? reporter.yellow(reporter.symbols.redirect)
+        : reporter.red(reporter.symbols.error);
+
+  const status = String(result.status ?? '---').padEnd(3);
+  const duration = formatDuration(result.durationMs).padStart(7);
+  const label = result.label ? reporter.dim(`  [${result.label}]`) : '';
+
+  reporter.line(`  ${symbol} ${reporter.dim(status)} ${reporter.dim(duration)}  ${result.url}${label}`);
+
+  if (result.error) {
+    reporter.line(`      ${reporter.red(result.error)}`);
+    if (result.errorHint) reporter.line(`      ${reporter.dim(`${reporter.symbols.arrow} ${result.errorHint}`)}`);
+  }
 }
 
 async function main(argv) {
@@ -41,7 +75,13 @@ async function main(argv) {
     return 0;
   }
 
-  const log = options.quiet ? () => {} : (message = '') => process.stdout.write(`${message}\n`);
+  const reporter = new Reporter({ quiet: options.quiet });
+
+  reporter.line('');
+  reporter.line(`  ${reporter.bold(`screenshotter v${VERSION}`)}`);
+  reporter.line('');
+
+  if (options.init) return initUrlsFile(options.input, reporter);
 
   const { targets, duplicates, source } = await collectTargets({
     inputFile: options.input,
@@ -51,11 +91,8 @@ async function main(argv) {
 
   if (targets.length === 0) {
     throw new UserError(`Keine URLs gefunden (geprüft: ${options.input}, CLI-Argumente, stdin).`, {
-      hint: `Lege eine ${options.input} an oder übergib URLs direkt: node screenshotter.js https://example.com`,
+      hint: `Mit "node screenshotter.js --init" eine ${options.input} anlegen oder URLs direkt übergeben: node screenshotter.js https://example.com`,
     });
-  }
-  if (duplicates.length > 0) {
-    log(dim(`Hinweis: ${duplicates.length} doppelte URL(s) übersprungen.`));
   }
 
   const outAbsolute = path.resolve(process.cwd(), options.out);
@@ -63,45 +100,85 @@ async function main(argv) {
 
   const outRelative = path.relative(process.cwd(), outAbsolute);
   const outLabel = !outRelative ? '.' : outRelative.startsWith('..') ? outAbsolute : outRelative;
+  const device = options.preset ? PRESETS[options.preset].label : 'Viewport';
+  const dot = ` ${reporter.symbols.bullet} `;
 
-  log(bold(`screenshotter v${VERSION}`));
-  log(
-    dim(
-      `${targets.length} URL(s) aus ${source} · Viewport ${options.width}×${options.height}` +
-        `${options.scale !== 1 ? `@${options.scale}x` : ''} · ${options.fullPage ? 'Full-Page' : 'Viewport'}` +
-        ` · ${options.concurrency} parallel · Ziel ${outLabel}`,
+  reporter.line(
+    reporter.dim(
+      [
+        `  ${targets.length} URL(s) aus ${source}`,
+        `${device} ${options.width}×${options.height}${options.scale !== 1 ? ` @${options.scale}x` : ''}`,
+        options.fullPage ? 'Full-Page' : 'nur Viewport',
+        `${options.concurrency} parallel`,
+        `Ziel ${outLabel}`,
+      ].join(dot),
     ),
   );
-  log();
+  if (duplicates.length > 0) {
+    reporter.line(reporter.dim(`  ${duplicates.length} doppelte URL(s) übersprungen.`));
+  }
+  reporter.line('');
 
-  const width = String(targets.length).length;
-  const { results, durationMs } = await captureAll(targets, options, { outAbsolute }, (result, done, total) => {
-    const state = classify(result);
-    const counter = dim(`[${String(done).padStart(width)}/${total}]`);
-    const status = stateColor(state, String(result.status ?? 'ERR').padEnd(4));
-    const time = dim(formatDuration(result.durationMs).padStart(7));
-    const tail = result.error ? red(result.error) : dim(`→ ${result.file}`);
-    log(`${counter} ${status} ${time}  ${result.url}  ${tail}`);
-  });
+  reporter.startProgress(targets.length);
+  const { results, durationMs } = await captureAll(
+    targets,
+    options,
+    { outAbsolute },
+    (result) => {
+      resultLine(reporter, result);
+      reporter.advance({ failed: classify(result) === 'error' });
+    },
+    (message) => reporter.line(reporter.dim(`  ${message}`)),
+  );
+  reporter.stopProgress();
 
   const failed = results.filter((result) => classify(result) === 'error');
   const redirected = results.filter((result) => classify(result) === 'redirect');
   const succeeded = results.length - failed.length - redirected.length;
   const bytes = results.reduce((total, result) => total + (result.bytes || 0), 0);
 
-  log();
-  log(
-    `${bold('Fertig')} in ${formatDuration(durationMs)} — ` +
-      `${green(`${succeeded} OK`)}, ${yellow(`${redirected.length} Weiterleitung(en)`)}, ${red(`${failed.length} Fehler`)}` +
-      ` · ${formatBytes(bytes)} Bilddaten`,
+  reporter.line('');
+  reporter.line(`  ${reporter.bold(`Fertig in ${formatDuration(durationMs)}`)}`);
+  reporter.line(
+    [
+      `    ${reporter.green(`${succeeded} erfolgreich`)}`,
+      redirected.length > 0 ? reporter.yellow(`${redirected.length} weitergeleitet`) : null,
+      failed.length > 0 ? reporter.red(`${failed.length} fehlgeschlagen`) : null,
+      reporter.dim(formatBytes(bytes)),
+    ]
+      .filter(Boolean)
+      .join(dot),
   );
 
-  if (options.report) {
-    const { indexPath, jsonPath } = await writeReport({ results, options, outAbsolute, durationMs, source });
-    log(`Report: ${indexPath}`);
-    log(`Daten:  ${jsonPath}`);
+  if (failed.length > 0) {
+    reporter.line('');
+    reporter.line(`  ${reporter.red(`Fehlgeschlagen (${failed.length}):`)}`);
+    for (const result of failed) {
+      const reason = result.error ?? `HTTP ${result.status}`;
+      reporter.line(`    ${reporter.red(reporter.symbols.error)} ${result.url}`);
+      reporter.line(`      ${reporter.dim(reason)}`);
+    }
   }
-  log(`Bilder: ${path.join(outAbsolute, options.shotsDir)}`);
+
+  reporter.line('');
+  let indexPath = '';
+  if (options.report) {
+    const written = await writeReport({ results, options, outAbsolute, durationMs, source });
+    indexPath = written.indexPath;
+    reporter.line(`  Report: ${reporter.bold(indexPath)}`);
+    reporter.line(`  Daten:  ${written.jsonPath}`);
+  }
+  reporter.line(`  Bilder: ${path.join(outAbsolute, options.shotsDir)}`);
+  reporter.line('');
+
+  if (options.open && indexPath) {
+    const opened = await openInDefaultApp(indexPath);
+    if (!opened) reporter.line(reporter.dim('  Report konnte nicht automatisch geöffnet werden.'));
+  } else if (!options.open && indexPath && reporter.isTty) {
+    // Nur für Menschen am Terminal — in cron- und CI-Logs wäre das nur Rauschen.
+    reporter.line(reporter.dim('  Tipp: mit --open öffnet sich der Report künftig von selbst.'));
+    reporter.line('');
+  }
 
   if (failed.length > 0 && !options.allowFailures) return 1;
   return 0;
@@ -112,12 +189,13 @@ main(process.argv.slice(2))
     process.exitCode = code;
   })
   .catch((error) => {
+    const reporter = new Reporter({ stream: process.stderr });
     if (error instanceof UserError) {
-      process.stderr.write(`${red('Fehler:')} ${error.message}\n`);
-      if (error.hint) process.stderr.write(`${dim(error.hint)}\n`);
+      process.stderr.write(`\n  ${reporter.red('Fehler:')} ${error.message}\n`);
+      if (error.hint) process.stderr.write(`  ${reporter.dim(`${reporter.symbols.arrow} ${error.hint}`)}\n\n`);
       process.exitCode = 2;
       return;
     }
-    process.stderr.write(`${red('Unerwarteter Fehler:')} ${error?.stack ?? error}\n`);
+    process.stderr.write(`\n  ${reporter.red('Unerwarteter Fehler:')} ${error?.stack ?? error}\n\n`);
     process.exitCode = 2;
   });

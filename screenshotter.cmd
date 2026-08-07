@@ -68,12 +68,9 @@ echo   In urls.txt steht noch keine URL.
 goto EDIT
 
 :MAKE_URLS
-echo # Eine URL pro Zeile. Zeilen mit # am Anfang sind Kommentare.> urls.txt
-echo # Fehlt das https://, wird es automatisch ergaenzt.>> urls.txt
-echo # Optionaler Anzeigename nach einem senkrechten Strich:>> urls.txt
-echo #   https://example.com ^| Startseite>> urls.txt
-echo.>> urls.txt
-echo https://example.com>> urls.txt
+REM Die Vorlage liegt im CLI, damit sie nur an einer Stelle gepflegt wird.
+node screenshotter.js --init >nul 2>&1
+if not exist "urls.txt" goto FAIL_INIT
 goto EDIT
 
 :EDIT
@@ -134,6 +131,12 @@ echo.
 echo   Der Download des Browsers ist fehlgeschlagen.
 echo   Bitte die Internetverbindung pruefen und diese Datei
 echo   danach erneut starten.
+goto HALT
+
+:FAIL_INIT
+echo.
+echo   urls.txt konnte nicht angelegt werden.
+echo   Fehlt die Schreibberechtigung in diesem Ordner?
 goto HALT
 
 :FAIL_RUN

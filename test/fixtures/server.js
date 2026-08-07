@@ -13,7 +13,7 @@ const STYLE = `
 `;
 
 const PAGES = {
-  '/tall': `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Lange Testseite</title>
+  '/tall': `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lange Testseite</title>
     <style>${STYLE}</style></head><body>
     <header>Sticky Header</header>
     <section><h1>Lange Testseite</h1><p>Diese Seite ist deutlich höher als der Viewport.</p><div class="spin"></div></section>
@@ -35,14 +35,22 @@ const PAGES = {
     </script>
     </body></html>`,
 
-  '/short': `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Kurze Testseite</title>
+  '/short': `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kurze Testseite</title>
     <style>${STYLE}</style></head><body>
     <header>Sticky Header</header>
     <section><h1>Kurze Testseite</h1><p>Passt komplett in den Viewport.</p></section>
     </body></html>`,
 
-  '/missing': `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Nicht gefunden</title>
+  '/missing': `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nicht gefunden</title>
     <style>${STYLE}</style></head><body><section><h1>404</h1><p>Diese Seite gibt es nicht.</p></section></body></html>`,
+
+  // Bewusst ohne Viewport-Meta: solche Seiten rendert Chromium im Mobil-Modus
+  // mit 980px Layoutbreite und skaliert sie herunter — genau wie ein echtes Handy.
+  '/legacy': `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Alte Seite</title>
+    <style>${STYLE}</style></head><body>
+    <header>Sticky Header</header>
+    <section><h1>Ohne Viewport-Meta</h1><p>Nicht für Mobilgeräte ausgelegt.</p></section>
+    </body></html>`,
 
   '/quotes': `<!doctype html><html lang="de"><head><meta charset="utf-8">
     <title>Titel mit &lt;Script&gt; &amp; "Anführungszeichen"</title>

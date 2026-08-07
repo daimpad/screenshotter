@@ -1,422 +1,337 @@
-# screenshotter
+<div align="center">
 
-Ein schlankes CLI-Werkzeug, das eine Liste von URLs abarbeitet, von jeder Seite
-einen **Full-Page-Screenshot** (gesamte Scrollhöhe) erstellt und daraus einen
-**statischen HTML-Report** mit Vorschaubildern, Lightbox und Zusammenfassungs­tabelle
-generiert.
+# 📸 screenshotter
 
-* **Eine einzige Abhängigkeit** — [Playwright](https://playwright.dev) für den Chromium-Teil.
-* **Kein Framework im Frontend** — der Report ist Vanilla HTML, CSS und JavaScript.
-* **Keine Datenbank** — alles liegt flach im Dateisystem.
-* **Läuft überall** — der fertige Ordner funktioniert auf jedem statischen Webserver
-  (Apache/LAMP, nginx, GitHub Pages, S3) und sogar per Doppelklick über `file://`.
+**Full-Page-Screenshots für eine Liste von URLs — plus fertigem HTML-Report.**
 
----
+URLs eintragen, starten, fertig: jede Seite in voller Scrollhöhe als Bild,
+dazu eine durchsuchbare Galerie, die auf jedem Webserver läuft.
 
-## Inhalt
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A5%2018.17-5FA04E?logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![Playwright](https://img.shields.io/badge/Engine-Chromium%20via%20Playwright-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
+[![Abhängigkeiten](https://img.shields.io/badge/Abh%C3%A4ngigkeiten-genau%201-3b5bdb)](package.json)
+[![Frontend](https://img.shields.io/badge/Frontend-Vanilla%20JS-f7df1e?logo=javascript&logoColor=black)](lib/assets)
+[![Plattformen](https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#windows-einfach-doppelklicken)
+[![Lizenz](https://img.shields.io/badge/Lizenz-MIT-green)](#lizenz)
 
-1. [Windows: einfach doppelklicken](#windows-einfach-doppelklicken)
-2. [Was dabei herauskommt](#was-dabei-herauskommt)
-3. [Voraussetzungen](#voraussetzungen)
-4. [Installation](#installation)
-5. [Schnellstart](#schnellstart)
-6. [Eingabe: woher die URLs kommen](#eingabe-woher-die-urls-kommen)
-7. [Alle CLI-Optionen](#alle-cli-optionen)
-8. [Rezepte](#rezepte)
-9. [Der Report im Detail](#der-report-im-detail)
-10. [report.json](#reportjson)
-11. [Veröffentlichen](#veröffentlichen)
-12. [Automatisieren](#automatisieren)
-13. [Tests](#tests)
-14. [Projektstruktur](#projektstruktur)
-15. [Fehlerbehebung](#fehlerbehebung)
-16. [Exit-Codes](#exit-codes)
-17. [Grenzen](#grenzen)
+<img src="docs/report-tabelle.jpg" alt="Der erzeugte Report mit Kennzahlen, Suchfeld und sortierbarer Screenshot-Tabelle" width="100%">
+
+</div>
 
 ---
 
-## Windows: einfach doppelklicken
+## Warum
 
-Wer nicht mit der Kommandozeile arbeiten möchte, startet alles über
-**`screenshotter.cmd`** — Doppelklick genügt.
+Wer eine Website abnimmt, umzieht oder relauncht, braucht **Bestandsaufnahmen**:
+wie sah jede Seite an diesem Tag aus? Von Hand sind das Dutzende Screenshots,
+die niemand sortiert wiederfindet.
 
-Der Starter erledigt der Reihe nach:
+`screenshotter` erledigt das in einem Rutsch — und legt eine `index.html`
+daneben, die man einfach auf den Webserver kopiert oder als Link verschickt.
 
-1. **Node.js prüfen.** Fehlt es, wird das erklärt und auf Wunsch die
-   Downloadseite geöffnet. (Node ist die einzige Software, die man von Hand
-   installieren muss — die LTS-Version mit Standardeinstellungen reicht.)
-2. **Abhängigkeiten installieren** — nur beim allerersten Start, dauert ein bis
-   zwei Minuten.
-3. **Chromium herunterladen** — ebenfalls nur einmal, ca. 150 MB.
-4. **Nach den URLs fragen.** Ein kleines Menü zeigt, wie viele URLs in `urls.txt`
-   stehen, und bietet an, die Datei im Editor zu öffnen:
+* 🪶 **Genau eine Abhängigkeit** — [Playwright](https://playwright.dev) für Chromium. Sonst nur Node-Bordmittel.
+* 🧱 **Kein Framework, kein Build** — der Report ist handgeschriebenes HTML, CSS und JavaScript.
+* 🗃️ **Keine Datenbank** — alles liegt flach im Dateisystem.
+* 🌍 **Läuft überall** — Apache/LAMP, nginx, GitHub Pages, S3 oder per Doppelklick über `file://`.
+* ♿ **Auch ohne JavaScript** — beide Tabellen stehen komplett im HTML; JS ergänzt nur den Komfort.
 
-   ```
-     In urls.txt stehen aktuell 3 URL(s).
+---
 
-       [1]  Screenshots jetzt erstellen
-       [2]  urls.txt bearbeiten
-       [3]  Beenden
+## In 60 Sekunden
 
-       Auswahl:
-   ```
-5. **Screenshots erstellen** und **den Report im Browser öffnen.**
+```bash
+git clone https://github.com/daimpad/screenshotter.git
+cd screenshotter
+npm install                      # Chromium holt sich das Tool beim ersten Lauf selbst
 
-Ab dem zweiten Start entfallen die Schritte 2 und 3 — dann sind es nur noch
-Doppelklick, `1` drücken, fertig.
+node screenshotter.js --init     # urls.txt anlegen
+#  ... URLs eintragen ...
+node screenshotter.js --open     # loslegen und den Report öffnen
+```
 
-**Praktisch:** Rechtsklick auf `screenshotter.cmd` → *Verknüpfung erstellen*, die
-Verknüpfung auf den Desktop ziehen. Dann startet der ganze Ablauf von dort.
+So sieht der Lauf aus:
 
-> **Falls Windows warnt.** Wurde das Projekt als ZIP heruntergeladen, markiert
-> Windows die Dateien als „aus dem Internet“. Einmal Rechtsklick auf
-> `screenshotter.cmd` → *Eigenschaften* → unten *Zulassen* ankreuzen → *OK*.
-> Nach einem `git clone` passiert das nicht.
+```text
+  screenshotter v1.1.0
 
-Der Starter ist für Windows 10 und 11 ausgelegt. Unter macOS und Linux läuft
-dasselbe über `node screenshotter.js` (siehe [Schnellstart](#schnellstart)).
+  7 URL(s) aus urls.txt · Desktop 1440×900 · Full-Page · 3 parallel · Ziel .
+
+  ✓ 200    1,6 s  https://example.com
+  ✓ 200    1,4 s  https://example.com/preise
+  ↻ 200    1,3 s  https://example.com/alt
+  ✗ ---    95 ms  https://gibtsnicht.example
+      Domain nicht gefunden
+      → Schreibweise der URL prüfen. Existiert die Domain und ist DNS erreichbar?
+
+  ████████████░░░░░░░░  5/7 · 1 Fehler · noch ~3 s
+```
+
+> **Windows?** Dann brauchst du gar keine Kommandozeile —
+> [`screenshotter.cmd` doppelklicken](#windows-einfach-doppelklicken).
+
+---
+
+## Der Report
+
+Zwei Ansichten auf denselben Daten, umschaltbar in der Werkzeugleiste:
+
+| Galerie | Dunkel |
+|---|---|
+| <img src="docs/report-galerie.jpg" alt="Galerie-Ansicht mit Karten" width="100%"> | <img src="docs/report-dunkel.jpg" alt="Galerie-Ansicht im dunklen Farbschema" width="100%"> |
+
+**Oben** Kennzahlen: Seiten, erfolgreich, weitergeleitet, fehlgeschlagen, Laufzeit, Bilddaten.
+**In der Mitte** alle Screenshots, alphabetisch nach URL vorsortiert.
+**Am Ende** die Zusammenfassung mit URL, Statuscode, Zeitstempel und Dateiname.
+
+| Aktion | Wie |
+|---|---|
+| Bild vergrößern | Vorschaubild anklicken → Lightbox |
+| Blättern | <kbd>←</kbd> <kbd>→</kbd> oder die Pfeil-Buttons |
+| Originalgröße | Im Vollbild auf das Bild klicken |
+| Schließen | <kbd>Esc</kbd>, das ✕ oder Klick auf den Hintergrund |
+| Suchen | <kbd>/</kbd> springt ins Suchfeld, <kbd>Esc</kbd> leert es |
+| Sortieren | Spaltenkopf anklicken (nochmal = umgekehrt) |
+| Filtern | *Alle · OK · Weiterleitung · Fehler* |
+| Ansicht | *Tabelle* oder *Galerie* — die Wahl wird gemerkt |
+| Hell/Dunkel | Schalter oben rechts, folgt sonst dem System |
+
+Unter 1000 px Breite werden beide Tabellen automatisch zu Karten — ohne
+horizontales Scrollen.
 
 ---
 
 ## Was dabei herauskommt
 
-Nach einem Lauf liegt im Zielordner (Standard: das aktuelle Verzeichnis):
-
-```
-index.html                       ← der Report
-report.json                      ← dieselben Daten maschinenlesbar
+```text
+index.html                    ← der Report
+report.json                   ← dieselben Daten maschinenlesbar
 assets/
-  report.css                     ← Vanilla CSS
-  report.js                      ← Vanilla JS (Sortierung, Filter, Lightbox)
+  report.css                  ← Vanilla CSS
+  report.js                   ← Vanilla JS (Sortierung, Filter, Lightbox)
 screenshots/
-  001-example-com.png            ← Full-Page-Screenshot
+  001-example-com.png         ← Full-Page-Screenshot
   002-example-com-preise.png
   thumbs/
-    001-example-com.png          ← Vorschaubild für die Tabelle
+    001-example-com.png       ← Vorschaubild für die Tabelle
     002-example-com-preise.png
 ```
 
-Die Dateinamen sind aus URL und Laufnummer abgeleitet (`001-`, `002-`, …), damit
-sie stabil, eindeutig und alphabetisch sortierbar sind.
+Dateinamen entstehen aus Laufnummer und URL — stabil, eindeutig und
+alphabetisch sortierbar.
 
 ---
 
-## Voraussetzungen
+## Windows: einfach doppelklicken
 
-| | |
-|---|---|
-| **Node.js** | ab 18.17 (getestet mit 20 und 22) |
-| **Chromium** | wird von Playwright mitgebracht (siehe Installation) |
-| **Betriebssystem** | Linux, macOS oder Windows |
-| **Plattenplatz** | ca. 300 MB für den Browser, plus die Screenshots |
+**`screenshotter.cmd`** doppelklicken, mehr braucht es nicht.
 
-Für den **Report selbst** wird nichts davon gebraucht — er ist reines HTML/CSS/JS.
+Der Starter prüft Node.js, installiert beim ersten Mal die Abhängigkeiten und
+den Browser, fragt dann kurz nach:
 
----
+```text
+  In urls.txt stehen aktuell 3 URL(s).
 
-## Installation
+    [1]  Screenshots jetzt erstellen
+    [2]  urls.txt bearbeiten
+    [3]  Beenden
 
-Unter Windows übernimmt das [`screenshotter.cmd`](#windows-einfach-doppelklicken)
-von selbst. Von Hand geht es so:
-
-```bash
-git clone https://github.com/daimpad/screenshotter.git
-cd screenshotter
-
-npm install                       # installiert Playwright
-npx playwright install chromium   # lädt den Browser herunter (einmalig)
+    Auswahl:
 ```
 
-Auf einem nackten Linux-Server fehlen Chromium oft noch Systembibliotheken.
-Dann stattdessen (benötigt `sudo`):
+Danach öffnet sich der fertige Report im Browser. Ab dem zweiten Start sind es
+nur noch Doppelklick, <kbd>1</kbd>, fertig.
 
-```bash
-npx playwright install --with-deps chromium
-```
+**Node.js** ist die einzige Software, die von Hand installiert werden muss —
+die [LTS-Version](https://nodejs.org/de/download) mit Standardeinstellungen genügt.
+Fehlt sie, bietet der Starter die Downloadseite an.
 
-Optional lässt sich der Befehl global verfügbar machen:
+<details>
+<summary><b>Tipps und Stolpersteine unter Windows</b></summary>
 
-```bash
-npm link          # danach steht "screenshotter" im PATH
-screenshotter --help
-```
+<br>
 
----
+**Verknüpfung auf dem Desktop:** Rechtsklick auf `screenshotter.cmd` →
+*Verknüpfung erstellen* → auf den Desktop ziehen.
 
-## Schnellstart
+**„Der Computer wurde durch Windows geschützt“:** Als ZIP heruntergeladene
+Dateien markiert Windows als „aus dem Internet“. Rechtsklick auf
+`screenshotter.cmd` → *Eigenschaften* → *Zulassen* → *OK*. Nach `git clone`
+passiert das nicht.
 
-```bash
-# 1) URLs in urls.txt eintragen (eine pro Zeile), dann:
-node screenshotter.js
+**Das Fenster blinkt kurz auf und schließt sich:** Bei Fehlern hält der Starter
+selbst an. Passiert es trotzdem, den Ablauf direkt ansehen: Explorer öffnen, in
+die Adressleiste `cmd` tippen, Enter, dann `screenshotter.cmd` eingeben.
 
-# 2) oder direkt URLs übergeben:
-node screenshotter.js https://example.com https://example.org
+**`'node' ist nicht als interner oder externer Befehl erkannt`:** Node ist
+installiert, aber der Suchpfad noch nicht aktualisiert — einmal ab- und
+wieder anmelden.
 
-# 3) Ergebnis ansehen:
-xdg-open index.html      # Linux
-open index.html          # macOS
-start index.html         # Windows
-```
-
-Beispielausgabe:
-
-```
-screenshotter v1.0.0
-3 URL(s) aus urls.txt · Viewport 1440×900 · Full-Page · 3 parallel · Ziel .
-
-[1/3] 200    1,4 s  https://example.com/          → screenshots/001-example-com.png
-[2/3] 200    2,1 s  https://example.com/preise    → screenshots/002-example-com-preise.png
-[3/3] ERR   30,0 s  https://gibtsnicht.example    page.goto: net::ERR_NAME_NOT_RESOLVED
-
-Fertig in 4,2 s — 2 OK, 0 Weiterleitung(en), 1 Fehler · 1,4 MB Bilddaten
-Report: /home/user/screenshotter/index.html
-Daten:  /home/user/screenshotter/report.json
-Bilder: /home/user/screenshotter/screenshots
-```
+</details>
 
 ---
 
 ## Eingabe: woher die URLs kommen
 
-Es gibt drei Quellen. Sie werden in dieser Reihenfolge geprüft:
+Drei Quellen, in dieser Reihenfolge:
 
-### 1. Argumente auf der Kommandozeile
+**1. Direkt auf der Kommandozeile** — hat Vorrang, `urls.txt` wird dann nicht zusätzlich gelesen:
 
 ```bash
 node screenshotter.js https://example.com example.org "https://example.net | Netzseite"
 ```
 
-Werden URLs als Argumente übergeben, wird die Standarddatei `urls.txt` **nicht**
-zusätzlich gelesen. Wer beides kombinieren will, gibt `--input` ausdrücklich an.
-
-### 2. Eine Textdatei (Standard: `urls.txt`)
+**2. Eine Textdatei** (Standard `urls.txt`, anders wählbar mit `--input`):
 
 ```text
-# Kommentarzeilen beginnen mit "#" oder "//" und werden ignoriert.
-# Leerzeilen ebenfalls.
+# Kommentarzeilen beginnen mit "#" oder "//".
 
 https://example.com                 | Startseite
 https://example.com/preise          | Preisübersicht
 example.com/kontakt
 
-# Ein "#" mitten in der URL bleibt ein Fragment und wird nicht als Kommentar gelesen:
+# Ein "#" mitten in der URL bleibt ein Fragment:
 https://example.com/docs#installation
 ```
 
-Regeln:
+* Eine URL pro Zeile, fehlendes `https://` wird ergänzt.
+* Nach `|` darf ein **Label** stehen — es erscheint im Report und ist mitdurchsuchbar.
+* Doppelte URLs werden übersprungen, ungültige melden ihre Zeilennummer.
+* Erlaubt sind nur `http` und `https`.
 
-* **Eine URL pro Zeile.**
-* Fehlt das Schema, wird `https://` ergänzt (`example.com` → `https://example.com`).
-* Erlaubt sind nur `http` und `https`; alles andere bricht mit einer Fehlermeldung
-  samt Zeilennummer ab.
-* Nach einem senkrechten Strich `|` darf ein **Label** stehen. Es taucht im Report
-  als Badge auf und ist mitdurchsuchbar.
-* **Doppelte URLs** werden übersprungen (mit Hinweis in der Konsole).
-
-Eine andere Datei wählt man mit `--input`:
+**3. stdin:**
 
 ```bash
-node screenshotter.js --input listen/produktion.txt
-```
-
-### 3. stdin
-
-```bash
-cat urls.txt | node screenshotter.js
 grep -h '^https' sitemap-*.txt | node screenshotter.js --out public
 ```
 
 ---
 
-## Alle CLI-Optionen
+## Optionen
+
+Die acht, die man wirklich braucht:
+
+| Option | Wirkung |
+|---|---|
+| `-p, --preset <gerät>` | `desktop` · `laptop` · `tablet` · `mobile` |
+| `--open` | Report nach dem Lauf im Browser öffnen |
+| `-o, --out <ordner>` | Zielordner (Standard: aktuelles Verzeichnis) |
+| `-i, --input <datei>` | Andere Eingabeliste |
+| `-c, --concurrency <n>` | Parallele Seiten (Standard: 3) |
+| `-f, --format <png\|jpeg>` | `jpeg` spart deutlich Platz |
+| `--hide <selektoren>` | Cookie-Banner und Werbung ausblenden |
+| `--init` | `urls.txt`-Vorlage anlegen |
+
+### Geräteprofile
+
+| Profil | Viewport | Skalierung | Mobil-Emulation |
+|---|---|---|---|
+| `desktop` | 1440 × 900 | 1× | – |
+| `laptop` | 1280 × 800 | 1× | – |
+| `tablet` | 820 × 1180 | 2× | ✓ |
+| `mobile` | 390 × 844 | 2× | ✓ |
+
+Einzelne `--width` / `--height` / `--scale` überschreiben das Profil.
+Bei `tablet` und `mobile` schaltet Chromium in die Mobil-Emulation — Seiten
+**ohne** `<meta name="viewport">` rendert es dann mit 980 CSS-Pixeln Breite und
+skaliert sie herunter, genau wie ein echtes Smartphone.
+
+<details>
+<summary><b>Alle weiteren Optionen</b></summary>
+
+<br>
 
 | Option | Standard | Bedeutung |
 |---|---|---|
-| `-i, --input <datei>` | `urls.txt` | Eingabedatei mit URLs |
-| `-o, --out <ordner>` | `.` | Zielordner für Report und Bilder |
-| `--shots-dir <name>` | `screenshots` | Unterordner für die Bilddateien |
-| `-c, --concurrency <n>` | `3` | Wie viele Seiten gleichzeitig |
+| `--shots-dir <name>` | `screenshots` | Unterordner für die Bilder |
 | `-w, --width <px>` | `1440` | Viewport-Breite = Screenshot-Breite |
-| `--height <px>` | `900` | Viewport-Höhe (bei Full-Page nur die Mindesthöhe) |
-| `--scale <n>` | `1` | `deviceScaleFactor`, `2` = Retina/2× |
-| `-f, --format <png\|jpeg>` | `png` | Bildformat |
-| `--quality <1-100>` | `80` | Nur für `--format jpeg` |
+| `--height <px>` | `900` | Viewport-Höhe (bei Full-Page die Mindesthöhe) |
+| `--scale <n>` | `1` | `deviceScaleFactor`, `2` = Retina |
+| `--quality <1-100>` | `80` | nur mit `--format jpeg` |
 | `-t, --timeout <ms>` | `30000` | Timeout pro Seite |
-| `--wait-until <state>` | `load` | `load`, `domcontentloaded`, `networkidle`, `commit` |
-| `--delay <ms>` | `500` | Zusätzliche Wartezeit direkt vor dem Auslösen |
-| `--retries <n>` | `1` | Wiederholungen pro URL bei Fehlern |
+| `--wait-until <state>` | `load` | `load` · `domcontentloaded` · `networkidle` · `commit` |
+| `--delay <ms>` | `500` | Wartezeit direkt vor dem Auslösen |
+| `--retries <n>` | `1` | Wiederholungen pro URL |
 | `--thumb-width <px>` | `480` | Breite der Vorschaubilder |
-| `--thumb-height <px>` | `360` | Höhe der Vorschaubilder (oberer Bildausschnitt) |
-| `--hide <selektoren>` | – | CSS-Selektoren ausblenden, mehrfach oder kommagetrennt |
+| `--thumb-height <px>` | `360` | Höhe der Vorschaubilder (oberer Ausschnitt) |
 | `--user-agent <ua>` | – | Eigener User-Agent |
-| `--color-scheme <s>` | – | `light`, `dark` oder `no-preference` erzwingen |
+| `--color-scheme <s>` | – | `light` · `dark` · `no-preference` erzwingen |
 | `--proxy <server>` | `$HTTPS_PROXY` | Proxy für den Browser |
-| `--title <text>` | `Screenshot-Report` | Überschrift und `<title>` des Reports |
-| `--browser-path <pfad>` | – | Pfad zu einer eigenen Chromium-Binary |
-| `--no-full-page` | – | Nur den sichtbaren Viewport aufnehmen |
-| `--no-scroll` | – | Kein Vorab-Scrollen (Lazy-Loading wird nicht ausgelöst) |
-| `--no-stabilize` | – | Animationen/Transitions **nicht** abschalten |
-| `--no-thumbnails` | – | Keine Vorschaubilder (der Report nutzt dann die Vollbilder) |
+| `--title <text>` | `Screenshot-Report` | Überschrift und `<title>` |
+| `--browser-path <pfad>` | – | Eigene Chromium-Binary |
+| `--no-full-page` | – | Nur den sichtbaren Viewport |
+| `--no-scroll` | – | Kein Vorab-Scrollen (Lazy-Loading nicht auslösen) |
+| `--no-stabilize` | – | Animationen **nicht** abschalten |
+| `--no-thumbnails` | – | Keine Vorschaubilder |
 | `--no-report` | – | Nur Screenshots, kein `index.html` |
-| `--no-sandbox` | – | Chromium ohne Sandbox starten (Docker, CI als root) |
+| `--no-sandbox` | – | Chromium ohne Sandbox (Docker, CI als root) |
 | `--no-proxy` | – | Proxy aus der Umgebung ignorieren |
-| `--allow-failures` | – | Exit-Code 0, auch wenn URLs fehlschlagen |
+| `--allow-failures` | – | Exit-Code 0 trotz Fehlern |
 | `-q, --quiet` | – | Nur Fehler ausgeben |
-| `-h, --help` | – | Hilfe anzeigen |
-| `-v, --version` | – | Version ausgeben |
 
 `node screenshotter.js --help` zeigt dieselbe Liste im Terminal.
 
-### Was für „fehlerfreie“ Screenshots automatisch passiert
+</details>
 
-Vor jeder Aufnahme läuft standardmäßig:
+### Was für saubere Screenshots automatisch passiert
 
-1. **Animationen einfrieren** — CSS-Animationen und -Transitions werden auf
-   Dauer 0 gesetzt, der Text-Cursor unsichtbar gemacht (`--no-stabilize` schaltet das ab).
-2. **Durchscrollen** — die Seite wird in Schritten bis zum Ende gescrollt, damit
-   `loading="lazy"`-Bilder und IntersectionObserver-Inhalte tatsächlich laden, danach
-   zurück nach oben (`--no-scroll` schaltet das ab).
-3. **Ruhe abwarten** — auf `networkidle` (bis 5 s), auf `document.fonts.ready`
-   und danach noch `--delay` Millisekunden.
-4. **Erst dann** wird über die gesamte Dokumenthöhe ausgelöst.
+1. **Animationen einfrieren** — CSS-Animationen und -Transitions auf Dauer 0, Text-Cursor unsichtbar.
+2. **Durchscrollen** — die Seite wird in Schritten bis ans Ende gescrollt, damit `loading="lazy"`-Bilder und IntersectionObserver-Inhalte wirklich laden, danach zurück nach oben.
+3. **Ruhe abwarten** — `networkidle` (bis 5 s), `document.fonts.ready`, dann `--delay`.
+4. **Erst dann** wird über die volle Dokumenthöhe ausgelöst.
+
+Abschaltbar mit `--no-stabilize` und `--no-scroll`.
 
 ---
 
 ## Rezepte
 
 ```bash
-# Mobiler Viewport, 2× Auflösung
-node screenshotter.js --width 390 --height 844 --scale 2
+# Wie sieht die Seite auf dem Handy aus?
+node screenshotter.js --preset mobile --open
 
 # Große Listen: mehr Parallelität, kleinere Dateien
-node screenshotter.js -i urls.txt -c 8 --format jpeg --quality 75
+node screenshotter.js -c 8 --format jpeg --quality 75
 
 # Cookie-Banner und Werbung wegblenden
 node screenshotter.js --hide "#cookie-banner,.cmp-overlay" --hide ".ad-slot"
 
-# Träge Seiten: länger warten, öfter probieren
+# Träge Seiten
 node screenshotter.js --wait-until networkidle --delay 3000 --timeout 60000 --retries 3
 
 # Dark-Mode-Variante der Seiten in einen eigenen Ordner
 node screenshotter.js -o report-dark --color-scheme dark --title "Report (Dark Mode)"
 
-# Nur Bilder, kein Report (z.B. für eine eigene Weiterverarbeitung)
-node screenshotter.js --no-report --no-thumbnails -o rohbilder
-
-# In Docker / als root
-node screenshotter.js --no-sandbox
-```
-
----
-
-## Der Report im Detail
-
-`index.html` besteht aus drei Teilen:
-
-**Kopf** — Titel, Zeitpunkt, Viewport und sechs Kennzahlen: Seiten, Erfolgreich,
-Weiterleitungen, Fehlgeschlagen, Laufzeit, Bilddaten.
-
-**Screenshots** — die Haupttabelle, standardmäßig **alphabetisch nach URL sortiert**.
-Pro Zeile: Laufnummer, Vorschaubild, Seitentitel + URL (+ Label, Weiterleitungsziel,
-Fehlermeldung), Statuscode, Seitenmaße, Dauer und Dateiname mit Größe.
-
-**Zusammenfassung** — am Seitenende die geforderte Übersichtstabelle mit genau
-**URL, Statuscode, Zeitstempel und Dateiname**, in Aufrufreihenfolge, mit einer
-Summenzeile darunter.
-
-### Bedienung
-
-| Aktion | Wie |
-|---|---|
-| Bild vergrößern | Vorschaubild anklicken → Lightbox |
-| Im Vollbild blättern | `←` / `→` oder die Pfeil-Buttons |
-| Originalgröße | Im Vollbild auf das Bild klicken (erneut klicken = zurück) |
-| Lightbox schließen | `Esc`, das `✕` oder ein Klick auf den Hintergrund |
-| Sortieren | Auf einen Spaltenkopf klicken (erneut = umgekehrt) |
-| Suchen | Suchfeld — filtert über URL, Titel, Label, Dateiname und Fehlertext |
-| Nach Status filtern | Die Chips *Alle / OK / Weiterleitung / Fehler* |
-| Hell/Dunkel | Der Schalter oben rechts (System → Hell → Dunkel, in `localStorage` gemerkt) |
-
-### Eigenschaften
-
-* **Funktioniert ohne JavaScript.** Beide Tabellen stehen vollständig im HTML;
-  JavaScript ergänzt nur Sortierung, Filter und Lightbox.
-* **Statusfarben:** grün = 2xx, amber = 3xx *oder eine gefolgte Weiterleitung*
-  (Endstatus 200, aber andere Ziel-URL — der Tooltip nennt das Ziel),
-  rot = 4xx/5xx oder ein Netzwerkfehler.
-* **Fehlgeschlagene URLs** bleiben mit Platzhalter und Fehlermeldung in der Tabelle.
-* **Responsiv:** unter 1000 px werden die Tabellen zu Karten, ohne horizontales Scrollen.
-* **Zugänglich:** `aria-sort` an den Spaltenköpfen, Tastaturbedienung, Fokus kehrt
-  nach dem Schließen der Lightbox zurück, sinnvolle `alt`-Texte.
-* **Ohne Netzwerk:** kein CDN, keine externen Fonts, keine Tracker.
-
----
-
-## report.json
-
-Dieselben Daten maschinenlesbar — praktisch für Diffs, Monitoring oder eine eigene
-Weiterverarbeitung:
-
-```json
-{
-  "generator": "screenshotter v1.0.0",
-  "generatedAt": "2026-08-07T15:19:44.512Z",
-  "source": "urls.txt",
-  "options": { "width": 1440, "height": 900, "scale": 1, "fullPage": true, "format": "png", "…": "…" },
-  "stats": { "total": 7, "ok": 4, "redirect": 1, "error": 2, "bytes": 918273, "durationMs": 3412 },
-  "results": [
-    {
-      "index": 0,
-      "url": "https://example.com/",
-      "label": "Startseite",
-      "file": "screenshots/001-example-com.png",
-      "thumb": "screenshots/thumbs/001-example-com.png",
-      "fileName": "001-example-com.png",
-      "status": 200,
-      "statusText": "OK",
-      "ok": true,
-      "state": "ok",
-      "title": "Example Domain",
-      "finalUrl": "https://example.com/",
-      "timestamp": "2026-08-07T15:19:40.881Z",
-      "durationMs": 1613,
-      "bytes": 298122,
-      "pageWidth": 1440,
-      "pageHeight": 1682,
-      "attempts": 1,
-      "error": null
-    }
-  ]
-}
-```
-
-Bei einem Fehler sind `file` und `thumb` `null`, `status` ist `null` und `error`
-enthält die Meldung. Die Proxy-Einstellung wird bewusst **nicht** mitgeschrieben.
-
-Beispiel: alle fehlgeschlagenen URLs herausziehen —
-
-```bash
-node -e "console.log(require('./report.json').results.filter(r=>r.state==='error').map(r=>r.url).join('\n'))"
+# Desktop und Handy nebeneinander vergleichen
+node screenshotter.js -p desktop -o vergleich/desktop
+node screenshotter.js -p mobile  -o vergleich/mobile
 ```
 
 ---
 
 ## Veröffentlichen
 
-Der Zielordner ist bereits eine fertige statische Website. Es wird **kein** PHP,
-kein Node und keine Datenbank auf dem Server gebraucht.
+Der Zielordner ist bereits eine fertige statische Website — kein PHP, kein Node,
+keine Datenbank auf dem Server.
 
-### Klassischer LAMP-/Apache-Server
+<details>
+<summary><b>Apache / LAMP</b></summary>
+
+<br>
 
 ```bash
 node screenshotter.js --out build --title "Kundenprojekt — Screenshots"
 rsync -av --delete build/ user@server:/var/www/html/screenshots/
 ```
 
-Aufruf dann unter `https://server/screenshots/`. `index.html` wird von Apache
-automatisch als Verzeichnisindex ausgeliefert — es ist keine `.htaccess` nötig.
+Aufruf unter `https://server/screenshots/`. `index.html` wird automatisch als
+Verzeichnisindex ausgeliefert, eine `.htaccess` ist nicht nötig.
 
-### nginx
+</details>
+
+<details>
+<summary><b>nginx</b></summary>
+
+<br>
 
 ```nginx
 server {
@@ -427,11 +342,16 @@ server {
 }
 ```
 
-### GitHub Pages
+</details>
+
+<details>
+<summary><b>GitHub Pages</b></summary>
+
+<br>
 
 Dieses Repository enthält bereits den Workflow
 [`.github/workflows/static.yml`](.github/workflows/static.yml), der das gesamte
-Repository nach jedem Push auf `main` als GitHub Page veröffentlicht. Es genügt also:
+Repository nach jedem Push auf `main` veröffentlicht:
 
 ```bash
 node screenshotter.js
@@ -440,32 +360,38 @@ git commit -m "Screenshot-Report aktualisiert"
 git push
 ```
 
-> Screenshots sind Binärdateien — wer sie regelmäßig eincheckt, sollte die Historie
-> im Blick behalten oder in `.gitignore` die vorbereiteten Zeilen aktivieren und
-> stattdessen per rsync/Artefakt deployen.
+Screenshots sind Binärdateien — wer sie regelmäßig eincheckt, sollte die Historie
+im Blick behalten oder in `.gitignore` die vorbereiteten Zeilen aktivieren und
+stattdessen per rsync deployen.
 
-### Lokal ansehen
+</details>
 
-`index.html` funktioniert per Doppelklick über `file://`. Wer lieber einen Server
-möchte:
+<details>
+<summary><b>Nur lokal ansehen</b></summary>
+
+<br>
+
+`index.html` funktioniert per Doppelklick über `file://`. Wer lieber einen
+Server möchte:
 
 ```bash
 npx serve .            # oder:
 python3 -m http.server 8080
 ```
 
+</details>
+
 ---
 
 ## Automatisieren
 
-### Täglich per cron
+**Täglich per cron:**
 
 ```cron
-# Jeden Tag um 03:30 Uhr einen frischen Report bauen
 30 3 * * * cd /opt/screenshotter && /usr/bin/node screenshotter.js --quiet --allow-failures --out /var/www/html/screenshots
 ```
 
-### In einer CI-Pipeline
+**In einer CI-Pipeline:**
 
 ```yaml
 - uses: actions/setup-node@v4
@@ -477,39 +403,158 @@ python3 -m http.server 8080
   with: { name: screenshot-report, path: public }
 ```
 
-Ohne `--allow-failures` bricht der Schritt ab, sobald eine URL fehlschlägt — genau
-das, was man für einen Erreichbarkeits-Check will.
+Ohne `--allow-failures` bricht der Schritt ab, sobald eine URL fehlschlägt —
+genau das, was man für einen Erreichbarkeits-Check will.
+
+### report.json
+
+Dieselben Daten maschinenlesbar, praktisch für Diffs und Monitoring:
+
+```bash
+# Alle fehlgeschlagenen URLs auflisten
+node -e "console.log(require('./report.json').results.filter(r=>r.state==='error').map(r=>r.url).join('\n'))"
+```
+
+<details>
+<summary><b>Struktur von report.json</b></summary>
+
+<br>
+
+```json
+{
+  "generator": "screenshotter v1.1.0",
+  "generatedAt": "2026-08-07T15:19:44.512Z",
+  "source": "urls.txt",
+  "options": { "preset": "desktop", "width": 1440, "height": 900, "scale": 1, "fullPage": true, "…": "…" },
+  "stats": { "total": 7, "ok": 4, "redirect": 1, "error": 2, "bytes": 918273, "durationMs": 3412 },
+  "results": [
+    {
+      "index": 0,
+      "url": "https://example.com/",
+      "label": "Startseite",
+      "file": "screenshots/001-example-com.png",
+      "thumb": "screenshots/thumbs/001-example-com.png",
+      "fileName": "001-example-com.png",
+      "status": 200,
+      "statusText": "OK",
+      "state": "ok",
+      "title": "Example Domain",
+      "finalUrl": "https://example.com/",
+      "timestamp": "2026-08-07T15:19:40.881Z",
+      "durationMs": 1613,
+      "bytes": 298122,
+      "pageWidth": 1440,
+      "pageHeight": 1682,
+      "attempts": 1,
+      "error": null,
+      "errorHint": "",
+      "errorCode": "",
+      "errorRaw": ""
+    }
+  ]
+}
+```
+
+Bei einem Fehler sind `file` und `thumb` `null`, `error` enthält den Klartext,
+`errorHint` den Lösungsvorschlag und `errorRaw` die Originalmeldung von Chromium.
+Die Proxy-Einstellung wird bewusst **nicht** mitgeschrieben.
+
+</details>
 
 ---
 
-## Tests
+## Fehlerbehebung
 
-Das Projekt bringt eine Testsuite auf Basis des eingebauten `node:test` mit —
-ohne zusätzliche Abhängigkeiten.
+Die meisten Fehler erklären sich inzwischen selbst — das Tool übersetzt
+Chromium-Meldungen in Klartext und schlägt gleich eine Lösung vor:
+
+```text
+  ✗ ---   0,3 s  https://beispiel.example
+      Zeitüberschreitung nach 30 s
+      → Seite braucht länger: --timeout 60000 setzen, notfalls zusätzlich --wait-until domcontentloaded.
+```
+
+<details>
+<summary><b>Weitere Fälle</b></summary>
+
+<br>
+
+**`Chromium konnte nicht gestartet werden`**
+Normalerweise lädt das Tool den Browser beim ersten Lauf selbst nach. Klappt das
+nicht: `npx playwright install chromium`, auf Servern zusätzlich
+`--with-deps`. Ein vorhandenes Chromium nutzt man mit
+`--browser-path /usr/bin/chromium` oder der Umgebungsvariable
+`SCREENSHOTTER_CHROMIUM`. Mit `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` unterbleibt
+der automatische Download.
+
+**In Docker oder als root bricht der Start ab**
+`--no-sandbox` verwenden.
+
+**Ein Cookie-Banner verdeckt die Seite**
+`--hide "#cookie-banner,.cmp"` — die Selektoren werden per CSS auf
+`visibility: hidden` gesetzt.
+
+**Untere Seitenteile sind leer**
+Lazy-Loading braucht mehr Zeit: `--wait-until networkidle --delay 2000`.
+Prüfen, dass `--no-scroll` **nicht** gesetzt ist.
+
+**Die Seite scrollt endlos und der Screenshot wird riesig**
+`--no-scroll` benutzen oder mit `--no-full-page` nur den Viewport aufnehmen.
+Das Vorab-Scrollen bricht ohnehin nach 10 Sekunden ab.
+
+**Viele Seiten laufen in Timeouts**
+Parallelität senken (`-c 2`), damit sich die Seiten nicht gegenseitig ausbremsen.
+
+**Sticky-Header tauchen im Bild mehrfach auf**
+Den Header für die Aufnahme ausblenden: `--hide "header.sticky"`.
+
+**Die Screenshots sind sehr groß**
+`--format jpeg --quality 75` reduziert die Dateigröße drastisch.
+
+**Auf dem Server fehlen Schriften oder Emojis**
+Nachinstallieren, z.B. `apt install fonts-liberation fonts-noto-color-emoji`.
+
+**Der Report zeigt keine Bilder**
+`index.html`, `assets/` und `screenshots/` gehören in denselben Ordner — die
+Pfade im Report sind relativ.
+
+</details>
+
+### Exit-Codes
+
+| Code | Bedeutung |
+|---|---|
+| `0` | Alles erfolgreich (oder `--allow-failures`) |
+| `1` | Mindestens eine URL fehlgeschlagen (Netzwerkfehler oder Status ≥ 400) |
+| `2` | Bedienfehler: unbekannte Option, ungültiger Wert, fehlende Datei, Browser startet nicht |
+
+---
+
+## Entwicklung
 
 ```bash
-npm test          # alles
-npm run test:unit # nur Unit-Tests (kein Browser nötig)
-npm run test:e2e  # kompletter Lauf gegen einen lokalen Testserver + Report im Browser
+npm test           # alles (48 Tests)
+npm run test:unit  # nur Unit-Tests, ohne Browser
+npm run test:e2e   # kompletter Lauf gegen einen lokalen Testserver
 ```
 
 Die E2E-Tests starten einen kleinen HTTP-Server mit vorbereiteten Seiten (lang,
-kurz, Weiterleitung, 404, Sonderzeichen im Titel, toter Port), lassen das CLI
-darüber laufen und prüfen anschließend Bildmaße, Statuslogik, HTML-Escaping sowie
-Sortierung, Filter, Lightbox und das Kartenlayout im echten Chromium.
+kurz, Weiterleitung, 404, ohne Viewport-Meta, Sonderzeichen im Titel, toter
+Port), lassen das CLI darüber laufen und prüfen danach Bildmaße, Statuslogik,
+HTML-Escaping sowie Sortierung, Filter, Lightbox, Galerie-Ansicht und
+Kartenlayout im echten Chromium.
 
----
-
-## Projektstruktur
-
-```
-screenshotter.cmd         Starter für Windows (Doppelklick, richtet alles ein)
+```text
+screenshotter.cmd         Starter für Windows (Doppelklick)
 screenshotter.js          Einstiegspunkt: Ablauf, Konsolenausgabe, Exit-Code
 lib/
-  cli.js                  Optionen, Validierung, Hilfetext
+  cli.js                  Optionen, Geräteprofile, Validierung, Hilfetext
   urls.js                 Einlesen und Normalisieren der URL-Liste
-  capture.js              Browserstart, Screenshot-Logik, Thumbnails, Parallelität
+  capture.js              Browserstart, Screenshots, Thumbnails, Parallelität
   report.js               Erzeugung von index.html und report.json
+  diagnose.js             Chromium-Fehler → Klartext plus Lösungshinweis
+  progress.js             Terminal-Ausgabe, Farben, Fortschrittsbalken
+  open.js                 Datei im Standardprogramm öffnen
   errors.js               Fehlertyp für Bedienfehler
   assets/
     report.css            Stylesheet des Reports (wird nach assets/ kopiert)
@@ -518,105 +563,23 @@ test/
   units.test.js           Unit-Tests
   e2e.test.js             End-to-End-Tests
   fixtures/server.js      Testserver und PNG-Hilfsfunktionen
-urls.txt                  Beispiel-Eingabedatei
 ```
 
 Die Vorschaubilder entstehen ohne Bildbibliothek: das fertige PNG wird in einer
-viewport­großen Seite dargestellt und erneut fotografiert. Das spart eine
+viewportgroßen Seite dargestellt und erneut fotografiert. Das spart eine
 Abhängigkeit wie `sharp` und liefert exakt die gewünschte Kachelgröße.
 
----
-
-## Fehlerbehebung
-
-### Rund um `screenshotter.cmd` (Windows)
-
-**Das Fenster blinkt kurz auf und schließt sich sofort**
-Bei Fehlern hält der Starter selbst an — schließt sich das Fenster trotzdem
-sofort, hilft der direkte Blick auf die Meldung: Explorer öffnen, in die
-Adressleiste `cmd` eintippen, Enter, dann `screenshotter.cmd` eingeben.
-
-**`'node' ist nicht als interner oder externer Befehl erkannt`**
-Node.js ist installiert, aber die Eingabeaufforderung kennt es noch nicht.
-Einmal ab- und wieder anmelden oder den Rechner neu starten, dann greift der
-neue Suchpfad.
-
-**Windows meldet „Der Computer wurde durch Windows geschützt“**
-Das betrifft Dateien, die als Download markiert sind: Rechtsklick auf
-`screenshotter.cmd` → *Eigenschaften* → *Zulassen* → *OK*. Alternativ das
-Projekt per `git clone` holen statt als ZIP.
-
-**Umlaute erscheinen als Kästchen oder Fragezeichen**
-Der Starter stellt die Konsole auf UTF-8 um. In der alten
-Eingabeaufforderung fehlen manchen Schriftarten trotzdem Zeichen wie `→`.
-Windows Terminal (unter Windows 11 der Standard) stellt alles korrekt dar.
-
-### Allgemein
-
-**`Chromium konnte nicht gestartet werden` / `Executable doesn't exist`**
-Der Browser fehlt: `npx playwright install chromium`. Auf Servern zusätzlich die
-Systembibliotheken: `npx playwright install --with-deps chromium`. Ein bereits
-vorhandenes Chromium lässt sich mit `--browser-path /usr/bin/chromium` oder über
-die Umgebungsvariable `SCREENSHOTTER_CHROMIUM` verwenden.
-
-**In Docker oder als root bricht der Start ab**
-`--no-sandbox` verwenden.
-
-**Ein Cookie-Banner verdeckt die Seite**
-`--hide "#cookie-banner,.cmp"` — die Selektoren werden per CSS auf
-`visibility: hidden` gesetzt. Alternativ hilft manchmal ein längeres `--delay`.
-
-**Untere Seitenteile sind leer oder Bilder fehlen**
-Lazy-Loading braucht mehr Zeit: `--wait-until networkidle --delay 2000`. Prüfen,
-dass `--no-scroll` **nicht** gesetzt ist.
-
-**Die Seite scrollt endlos (Infinite Scroll) und der Screenshot wird riesig**
-`--no-scroll` benutzen oder mit `--no-full-page` nur den Viewport aufnehmen.
-Das Vorab-Scrollen bricht ohnehin nach 10 Sekunden ab.
-
-**`Timeout 30000ms exceeded`**
-`--timeout 60000 --retries 2`. Bei vielen langsamen Seiten zusätzlich die
-Parallelität senken (`-c 2`), damit sich die Seiten nicht gegenseitig ausbremsen.
-
-**Sticky-Header tauchen im Bild mehrfach auf**
-Den Header für die Aufnahme ausblenden: `--hide "header.sticky"`.
-
-**Die Screenshots sind sehr groß**
-`--format jpeg --quality 75` reduziert die Dateigröße drastisch. `--scale 1`
-(Standard) statt `2` halbiert die Kantenlänge.
-
-**Hinter einem Firmenproxy erscheint `ERR_TUNNEL_CONNECTION_FAILED`**
-`$HTTPS_PROXY` wird automatisch übernommen; explizit geht `--proxy http://proxy:3128`.
-Soll der Proxy ignoriert werden: `--no-proxy`.
-
-**Auf dem Server fehlen Schriften oder Emojis**
-Auf dem System nachinstallieren, z.B.
-`apt install fonts-liberation fonts-noto-color-emoji`.
-
-**Der Report zeigt keine Bilder**
-`index.html`, `assets/` und `screenshots/` gehören zusammen in denselben Ordner —
-die Pfade im Report sind relativ.
-
----
-
-## Exit-Codes
-
-| Code | Bedeutung |
-|---|---|
-| `0` | Alle URLs erfolgreich (oder `--allow-failures` gesetzt) |
-| `1` | Mindestens eine URL ist fehlgeschlagen (Netzwerkfehler oder Status ≥ 400) |
-| `2` | Bedienfehler: unbekannte Option, ungültiger Wert, fehlende Eingabedatei, Browser startet nicht |
+Weitere Hinweise für Beitragende — Architektur, Konventionen und die
+Fallstricke, über die dieses Projekt schon gestolpert ist — stehen in
+[`CLAUDE.md`](CLAUDE.md).
 
 ---
 
 ## Grenzen
 
-* **Nur Chromium.** Firefox und WebKit wären eine Zeile Code, würden aber zwei
-  weitere Browser-Downloads bedeuten.
-* **Keine Logins.** Seiten hinter einer Anmeldung werden so aufgenommen, wie sie
-  ein anonymer Besucher sieht. `--user-agent` hilft, Cookies/Sessions nicht.
-* **Sehr hohe Seiten** (mehr als ca. 30.000 px) kann Chromium abschneiden — dann
-  `--no-full-page` oder eine geringere `--scale` verwenden.
+* **Nur Chromium.** Firefox und WebKit wären eine Zeile Code, würden aber zwei weitere Browser-Downloads bedeuten.
+* **Keine Logins.** Seiten werden so aufgenommen, wie ein anonymer Besucher sie sieht.
+* **Sehr hohe Seiten** (mehr als ca. 30.000 px) kann Chromium abschneiden — dann `--no-full-page` oder eine kleinere `--scale`.
 * **Kein Bildvergleich.** Das Werkzeug erstellt Bestandsaufnahmen, es diffed sie nicht.
 
 ---

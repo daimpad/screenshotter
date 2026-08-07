@@ -158,3 +158,154 @@ test('doppelte URLs werden nur einmal erfasst', async () => {
   assert.equal(result.targets.length, 2);
   assert.equal(result.duplicates.length, 1);
 });
+
+/* ------------------------------------------------ Klartext-Fehlermeldungen */
+
+test('diagnose übersetzt Chromium-Fehler in Klartext mit Hinweis', async () => {
+  const { diagnose } = await import('../lib/diagnose.js');
+
+  const dns = diagnose('page.goto: net::ERR_NAME_NOT_RESOLVED at https://gibtsnicht.example/');
+  assert.equal(dns.code, 'ERR_NAME_NOT_RESOLVED');
+  assert.equal(dns.message, 'Domain nicht gefunden');
+  assert.match(dns.hint, /Schreibweise/);
+  // Präfix und Ziel-URL sind aus dem Rohtext entfernt.
+  assert.equal(dns.raw, 'ERR_NAME_NOT_RESOLVED');
+
+  assert.equal(diagnose('net::ERR_CONNECTION_REFUSED').code, 'ERR_CONNECTION_REFUSED');
+  assert.equal(diagnose('net::ERR_TUNNEL_CONNECTION_FAILED').code, 'ERR_PROXY');
+  assert.equal(diagnose('net::ERR_CERT_AUTHORITY_INVALID').code, 'ERR_CERT');
+  assert.equal(diagnose('net::ERR_TOO_MANY_REDIRECTS').code, 'ERR_TOO_MANY_REDIRECTS');
+  assert.equal(diagnose('net::ERR_UNSAFE_PORT').code, 'ERR_UNSAFE_PORT');
+});
+
+test('diagnose rechnet Timeouts in Sekunden um und schlägt einen höheren Wert vor', async () => {
+  const { diagnose } = await import('../lib/diagnose.js');
+
+  const result = diagnose('page.goto: Timeout 30000ms exceeded.');
+  assert.equal(result.code, 'TIMEOUT');
+  assert.equal(result.message, 'Zeitüberschreitung nach 30 s');
+  assert.match(result.hint, /--timeout 60000/);
+});
+
+test('diagnose behält unbekannte Meldungen bei, aber ohne Playwright-Rauschen', async () => {
+  const { diagnose } = await import('../lib/diagnose.js');
+
+  const result = diagnose('page.goto: Etwas ganz Neues ist passiert at https://example.com/x\nCall log:\n  - foo');
+  assert.equal(result.code, 'UNKNOWN');
+  assert.equal(result.message, 'Etwas ganz Neues ist passiert');
+  assert.equal(diagnose(null).message, 'Unbekannter Fehler');
+});
+
+/* ---------------------------------------------------- Terminal-Darstellung */
+
+test('Fortschrittsbalken und Restzeit rechnen korrekt', async () => {
+  const { renderBar, estimateRemaining, symbolSet, supportsUnicode } = await import('../lib/progress.js');
+
+  const symbols = symbolSet(true);
+  assert.equal(renderBar(0, 10, symbols), '░'.repeat(10));
+  assert.equal(renderBar(1, 10, symbols), '█'.repeat(10));
+  assert.equal(renderBar(0.5, 10, symbols), '█████░░░░░');
+  // Werte ausserhalb von 0..1 dürfen den Balken nicht sprengen.
+  assert.equal(renderBar(5, 4, symbols).length, 4);
+  assert.equal(renderBar(Number.NaN, 4, symbols), '░░░░');
+
+  assert.equal(estimateRemaining(4000, 2, 10), 16000);
+  assert.equal(estimateRemaining(4000, 0, 10), null);
+  assert.equal(estimateRemaining(4000, 10, 10), null);
+
+  // Alte Windows-Konsolen bekommen ASCII.
+  assert.equal(supportsUnicode({}, 'linux'), true);
+  assert.equal(supportsUnicode({}, 'win32'), false);
+  assert.equal(supportsUnicode({ WT_SESSION: '1' }, 'win32'), true);
+  assert.equal(symbolSet(false).ok, '+');
+});
+
+test('Reporter schreibt nichts, wenn --quiet gesetzt ist', async () => {
+  const { Reporter } = await import('../lib/progress.js');
+  const written = [];
+  const stream = { write: (text) => written.push(text), isTTY: false, columns: 80 };
+
+  const loud = new Reporter({ stream, quiet: false });
+  loud.line('hallo');
+  assert.deepEqual(written, ['hallo\n']);
+
+  const quiet = new Reporter({ stream, quiet: true });
+  quiet.line('still');
+  quiet.startProgress(5);
+  quiet.advance();
+  assert.deepEqual(written, ['hallo\n'], 'im Quiet-Modus darf nichts dazukommen');
+});
+
+test('ohne TTY wird keine Fortschrittszeile gezeichnet', async () => {
+  const { Reporter } = await import('../lib/progress.js');
+  const written = [];
+  const reporter = new Reporter({ stream: { write: (t) => written.push(t), isTTY: false, columns: 80 } });
+
+  reporter.startProgress(4);
+  reporter.advance();
+  reporter.line('fertig');
+  assert.deepEqual(written, ['fertig\n']);
+});
+
+/* ------------------------------------------------------------ Öffnen-Hilfe */
+
+test('openCommand wählt das richtige Kommando je Plattform', async () => {
+  const { openCommand } = await import('../lib/open.js');
+
+  assert.deepEqual(openCommand('a.html', 'win32'), { command: 'cmd', args: ['/c', 'start', '', 'a.html'] });
+  assert.deepEqual(openCommand('a.html', 'darwin'), { command: 'open', args: ['a.html'] });
+  assert.deepEqual(openCommand('a.html', 'linux'), { command: 'xdg-open', args: ['a.html'] });
+});
+
+/* -------------------------------------------------------------- Geräteprofile */
+
+test('--preset setzt Viewport, Skalierung und Mobil-Emulation', () => {
+  const mobile = parseCliArgs(['--preset', 'mobile']);
+  assert.equal(mobile.width, 390);
+  assert.equal(mobile.height, 844);
+  assert.equal(mobile.scale, 2);
+  assert.equal(mobile.emulateMobile, true);
+
+  const desktop = parseCliArgs(['-p', 'desktop']);
+  assert.equal(desktop.width, 1440);
+  assert.equal(desktop.emulateMobile, false);
+
+  assert.throws(() => parseCliArgs(['--preset', 'fernseher']), /desktop, laptop, tablet, mobile/);
+});
+
+test('einzelne Viewport-Angaben schlagen das Geräteprofil', () => {
+  const options = parseCliArgs(['--preset', 'mobile', '--width', '500']);
+  assert.equal(options.width, 500, 'explizite Breite gewinnt');
+  assert.equal(options.height, 844, 'der Rest kommt weiter aus dem Profil');
+  assert.equal(options.scale, 2);
+});
+
+test('--init und --open werden erkannt', () => {
+  assert.equal(parseCliArgs(['--init']).init, true);
+  assert.equal(parseCliArgs(['--open']).open, true);
+  assert.equal(parseCliArgs([]).init, false);
+  assert.equal(parseCliArgs([]).open, false);
+});
+
+test('der Hilfetext nennt Schnellstart, Profile und Exit-Codes', async () => {
+  const { helpText } = await import('../lib/cli.js');
+  const text = helpText();
+
+  for (const marker of ['SO GEHT ES LOS', 'GERÄTEPROFILE', '--open', '--init', 'EXIT-CODES']) {
+    assert.ok(text.includes(marker), `"${marker}" fehlt in der Hilfe`);
+  }
+});
+
+test('das Install-Kommando für Chromium zeigt auf eine vorhandene Datei', async () => {
+  const { chromiumInstallCommand } = await import('../lib/capture.js');
+  const { existsSync } = await import('node:fs');
+
+  const spec = chromiumInstallCommand();
+  assert.equal(spec.command, process.execPath);
+  assert.deepEqual(spec.args.slice(1), ['install', 'chromium']);
+  assert.ok(existsSync(spec.args[0]), `Playwright-CLI nicht gefunden: ${spec.args[0]}`);
+});
+
+test('--open zusammen mit --no-report wird abgelehnt', () => {
+  assert.throws(() => parseCliArgs(['--open', '--no-report']), /schließen sich aus/);
+});
