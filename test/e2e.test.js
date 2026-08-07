@@ -9,7 +9,7 @@
 
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -94,7 +94,8 @@ test('CLI endet mit Exit-Code 1, weil URLs fehlschlagen', () => {
   assert.equal(run.code, 1, `stdout:\n${run.stdout}\nstderr:\n${run.stderr}`);
   assert.match(run.stdout, /Fertig in/);
   // 404 und Verbindungsfehler zählen beide als Fehler.
-  assert.match(run.stdout, /2 Fehler/);
+  assert.match(run.stdout, /2 fehlgeschlagen/);
+  assert.match(run.stdout, /Fehlgeschlagen \(2\):/, 'Fehlerliste am Ende fehlt');
   // CLI-URLs haben Vorrang: die urls.txt des Projekts darf nicht mitgelesen werden.
   assert.match(run.stdout, /6 URL\(s\) aus CLI-Argumente\b/);
   assert.ok(!run.stdout.includes('urls.txt'), 'Standard-Eingabedatei wurde fälschlich mitgelesen');
@@ -280,31 +281,6 @@ test('Report ist im Browser bedienbar: Sortierung, Filter, Suche, Lightbox', asy
   await context.close();
 });
 
-test('Tabellenkopf bleibt beim Scrollen am oberen Rand kleben', async () => {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 700 } });
-  const page = await context.newPage();
-  await page.goto(pathToFileURL(path.join(outDir, 'index.html')).href, { waitUntil: 'load' });
-  await page.waitForSelector('html.js-ready');
-
-  await page.evaluate(() => window.scrollTo({ top: 1400, behavior: 'instant' }));
-  await page.waitForTimeout(150);
-
-  const positions = await page.evaluate(() => {
-    const table = document.getElementById('shots-table');
-    return {
-      head: Math.round(table.querySelector('thead th').getBoundingClientRect().top),
-      table: Math.round(table.getBoundingClientRect().top),
-    };
-  });
-
-  assert.ok(positions.table < -100, 'Testaufbau: die Tabelle muss aus dem Viewport gescrollt sein');
-  assert.ok(
-    Math.abs(positions.head) <= 1,
-    `Kopfzeile klebt nicht (top=${positions.head}px) — meist ein overflow-Kontext um die Tabelle`,
-  );
-  await context.close();
-});
-
 test('Kartenlayout auf schmalen Viewports: Vorschau sichtbar, Filter wirksam', async () => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
@@ -359,5 +335,162 @@ test('fehlende Eingabedatei liefert Exit-Code 2 mit Hinweis', async () => {
     assert.match(result.stderr, /nicht gefunden/i);
   } finally {
     await rm(empty, { recursive: true, force: true });
+  }
+});
+
+test('Fehlerzeilen zeigen Klartext plus Lösungshinweis', async () => {
+  const html = await readFile(path.join(outDir, 'index.html'), 'utf8');
+
+  assert.ok(html.includes('Server nimmt keine Verbindung an'), 'Klartextmeldung fehlt im Report');
+  assert.ok(html.includes('class="page-hint"'), 'Hinweiszeile fehlt im Report');
+
+  const dead = report.results.find((result) => result.file === null);
+  assert.equal(dead.errorCode, 'ERR_CONNECTION_REFUSED');
+  assert.equal(dead.error, 'Server nimmt keine Verbindung an');
+  assert.ok(dead.errorHint.length > 0);
+  assert.ok(dead.errorRaw.includes('ERR_CONNECTION_REFUSED'), 'Rohmeldung bleibt für die Fehlersuche erhalten');
+});
+
+test('Galerie-Ansicht: Umschalter ordnet die Zeilen als Karten an', async () => {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+  const page = await context.newPage();
+  await page.goto(pathToFileURL(path.join(outDir, 'index.html')).href, { waitUntil: 'load' });
+  await page.waitForSelector('html.js-ready');
+
+  const rows = '#shots-table tbody tr:not(.empty-row)';
+  const tableWidth = (await page.locator(rows).first().boundingBox()).width;
+
+  await page.locator('.chip[data-view="grid"]').click();
+  await page.waitForTimeout(200);
+
+  const cardWidth = (await page.locator(rows).first().boundingBox()).width;
+  assert.ok(cardWidth < tableWidth / 2, `Karte sollte deutlich schmaler sein (${cardWidth} vs ${tableWidth})`);
+  assert.equal(await page.locator('#shots-card').evaluate((el) => el.classList.contains('view-grid')), true);
+  assert.equal(await page.locator('.chip[data-view="grid"]').getAttribute('aria-pressed'), 'true');
+
+  // Filter müssen auch in der Galerie greifen.
+  await page.locator('.chip[data-filter="error"]').click();
+  assert.equal(await page.locator(`${rows}:visible`).count(), 2);
+  await page.locator('.chip[data-filter="all"]').click();
+
+  // Die Wahl überlebt einen Neuaufbau der Seite.
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForSelector('html.js-ready');
+  assert.equal(await page.locator('#shots-card').evaluate((el) => el.classList.contains('view-grid')), true);
+
+  await context.close();
+});
+
+test('Werkzeugleiste klebt oben und überdeckt die Tabellenkopfzeile nicht', async () => {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 700 } });
+  const page = await context.newPage();
+  await page.goto(pathToFileURL(path.join(outDir, 'index.html')).href, { waitUntil: 'load' });
+  await page.waitForSelector('html.js-ready');
+
+  await page.evaluate(() => window.scrollTo({ top: 1200, behavior: 'instant' }));
+  await page.waitForTimeout(150);
+
+  const geometry = await page.evaluate(() => {
+    const toolbar = document.querySelector('.toolbar').getBoundingClientRect();
+    const head = document.querySelector('#shots-table thead th').getBoundingClientRect();
+    const table = document.getElementById('shots-table').getBoundingClientRect();
+    return {
+      toolbarTop: Math.round(toolbar.top),
+      toolbarBottom: Math.round(toolbar.bottom),
+      headTop: Math.round(head.top),
+      tableTop: Math.round(table.top),
+    };
+  });
+
+  assert.ok(geometry.tableTop < -100, 'Testaufbau: die Tabelle muss aus dem Viewport gescrollt sein');
+
+  assert.ok(Math.abs(geometry.toolbarTop) <= 1, `Werkzeugleiste klebt nicht (top=${geometry.toolbarTop})`);
+  assert.ok(
+    Math.abs(geometry.headTop - geometry.toolbarBottom) <= 2,
+    `Kopfzeile sitzt nicht bündig unter der Leiste (${geometry.headTop} vs ${geometry.toolbarBottom})`,
+  );
+
+  await context.close();
+});
+
+test('Taste "/" springt in die Suche, Escape leert sie wieder', async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  await page.goto(pathToFileURL(path.join(outDir, 'index.html')).href, { waitUntil: 'load' });
+  await page.waitForSelector('html.js-ready');
+
+  const rows = '#shots-table tbody tr:not(.empty-row)';
+  await page.keyboard.press('/');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'search');
+
+  await page.keyboard.type('quotes');
+  await page.waitForTimeout(150);
+  assert.equal(await page.locator(`${rows}:visible`).count(), 1);
+  // Das "/" selbst darf nicht im Feld landen.
+  assert.equal(await page.inputValue('#search'), 'quotes');
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  assert.equal(await page.inputValue('#search'), '');
+  assert.equal(await page.locator(`${rows}:visible`).count(), 6);
+
+  await context.close();
+});
+
+test('--init legt eine Vorlage an und überschreibt eine vorhandene Datei nicht', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'screenshotter-init-'));
+  try {
+    const first = await runCli(['--init', '--input', path.join(dir, 'urls.txt')], dir);
+    assert.equal(first.code, 0, first.stderr);
+    assert.match(first.stdout, /angelegt/);
+
+    const template = await readFile(path.join(dir, 'urls.txt'), 'utf8');
+    assert.match(template, /^# urls\.txt/);
+    assert.match(template, /https:\/\/example\.com/);
+
+    await writeFile(path.join(dir, 'urls.txt'), 'https://meine.example\n', 'utf8');
+    const second = await runCli(['--init', '--input', path.join(dir, 'urls.txt')], dir);
+    assert.equal(second.code, 0);
+    assert.match(second.stdout, /gibt es schon/);
+    assert.equal(await readFile(path.join(dir, 'urls.txt'), 'utf8'), 'https://meine.example\n');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('--preset mobile nimmt in Smartphone-Breite auf', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'screenshotter-preset-'));
+  try {
+    const result = await runCli(
+      [
+        '--out',
+        dir,
+        '--no-proxy',
+        '--preset',
+        'mobile',
+        '--retries',
+        '0',
+        '--no-thumbnails',
+        `${server.origin}/short`,
+        `${server.origin}/legacy`,
+      ],
+      ROOT,
+    );
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Smartphone 390×844 @2x/);
+
+    const data = JSON.parse(await readFile(path.join(dir, 'report.json'), 'utf8'));
+    assert.equal(data.options.preset, 'mobile');
+
+    // Responsive Seite: 390 CSS-Pixel bei deviceScaleFactor 2 ergeben 780 Bildpunkte.
+    const responsive = data.results.find((entry) => entry.url.endsWith('/short'));
+    assert.equal(pngSize(await readFile(path.join(dir, responsive.file))).width, 780);
+
+    // Ohne Viewport-Meta legt Chromium im Mobil-Modus 980 CSS-Pixel zugrunde —
+    // dasselbe Verhalten wie auf einem echten Smartphone.
+    const legacy = data.results.find((entry) => entry.url.endsWith('/legacy'));
+    assert.equal(pngSize(await readFile(path.join(dir, legacy.file))).width, 1960);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
   }
 });

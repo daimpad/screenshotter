@@ -24,6 +24,8 @@
   --radius-sm: 8px;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Höhe der klebenden Werkzeugleiste; JS misst nach und korrigiert. */
+  --toolbar-height: 3.4rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -231,12 +233,18 @@ main {
 
 /* ---------- Werkzeugleiste ---------- */
 
+/* Bleibt beim Scrollen erreichbar; die Tabellenkopfzeile rutscht darunter. */
 .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
   margin-bottom: 1rem;
+  padding: 0.6rem 0;
+  background: var(--bg);
 }
 
 .search {
@@ -311,7 +319,8 @@ table {
 
 thead th {
   position: sticky;
-  top: 0;
+  /* Unterhalb der klebenden Werkzeugleiste einrasten, sonst überdecken sie sich. */
+  top: var(--toolbar-height);
   z-index: 2;
   background: var(--bg-subtle);
   border-bottom: 1px solid var(--border);
@@ -481,7 +490,30 @@ tbody tr:hover {
   margin: 0.35rem 0 0;
   color: var(--error);
   font-size: 0.8rem;
+  font-weight: 550;
   overflow-wrap: anywhere;
+}
+
+.page-hint {
+  margin: 0.15rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.page-hint::before {
+  content: "→ ";
+  color: var(--text-faint);
+}
+
+kbd {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--bg-subtle);
+  font-family: var(--mono);
+  font-size: 0.78em;
 }
 
 .page-redirect {
@@ -663,6 +695,106 @@ tbody tr:hover {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* ---------- Galerie-Ansicht ----------
+   Nur oberhalb von 1000px nötig: darunter sind die Zeilen ohnehin schon Karten,
+   deshalb wird der Umschalter dort ausgeblendet. */
+
+@media (min-width: 1001px) {
+  .view-grid thead {
+    display: none;
+  }
+
+  .view-grid tbody {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.1rem;
+    padding: 1.1rem;
+  }
+
+  .view-grid tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "preview preview"
+      "page    page"
+      "status  file";
+    align-content: start;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    overflow: hidden;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .view-grid tbody tr[hidden] {
+    display: none;
+  }
+
+  .view-grid tbody tr:hover {
+    background: var(--bg-elevated);
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+  }
+
+  .view-grid tbody td {
+    display: block;
+    padding: 0.4rem 0.85rem;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .view-grid td.col-index,
+  .view-grid td[data-label="Seitenhöhe"],
+  .view-grid td[data-label="Dauer"] {
+    display: none;
+  }
+
+  .view-grid td.col-preview {
+    grid-area: preview;
+    width: auto;
+    padding: 0;
+  }
+
+  .view-grid .shot-link,
+  .view-grid .shot-missing {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+  }
+
+  .view-grid .shot-link:hover,
+  .view-grid .shot-link:focus-visible {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .view-grid td.page-cell {
+    grid-area: page;
+    min-width: 0;
+    max-width: none;
+    padding-top: 0.75rem;
+  }
+
+  .view-grid td[data-label="Status"] {
+    grid-area: status;
+    padding-bottom: 0.85rem;
+  }
+
+  .view-grid td[data-label="Datei"] {
+    grid-area: file;
+    padding-bottom: 0.85rem;
+    text-align: right;
+  }
+}
+
+@media (max-width: 1000px) {
+  .views {
+    display: none;
+  }
 }
 
 /* ---------- Responsiv: Tabellen werden zu Karten ----------

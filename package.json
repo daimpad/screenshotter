@@ -1,8 +1,8 @@
 {
   "name": "screenshotter",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Leichtgewichtiges CLI zum Erstellen von Full-Page-Screenshots und Generieren eines statischen HTML-Reports.",
+  "description": "Leichtgewichtiges CLI für Full-Page-Screenshots einer URL-Liste plus statischem HTML-Report.",
   "type": "module",
   "bin": {
     "screenshotter": "./screenshotter.js"
