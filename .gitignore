@@ -1,0 +1,18 @@
+# Abhängigkeiten
+node_modules/
+
+# Betriebssystem / Editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Zwischendateien der Thumbnail-Erzeugung (werden normalerweise selbst aufgeräumt)
+screenshots/.thumb-*.html
+
+# Der generierte Report wird bewusst NICHT ignoriert, damit ihn der
+# GitHub-Pages-Workflow (.github/workflows/static.yml) veröffentlichen kann.
+# Wenn die Ausgabe nicht im Repository landen soll, hier einkommentieren:
+# index.html
+# report.json
+# assets/
+# screenshots/
