@@ -35,6 +35,8 @@ node screenshotter.js --help
 node screenshotter.js --init
 node screenshotter.js https://example.com --out /tmp/probe --open
 node screenshotter.js --serve --open
+
+npm run demo                # baut den Demo-Report unter docs/ neu
 ```
 
 `node --test test/` funktioniert **nicht** — Node hält das Verzeichnis für einen
@@ -68,6 +70,25 @@ es in `lib/capture.js` (`base`), im Report und in der README-Beschreibung von
 
 `captureOne()` wirft nie — Fehler landen im Ergebnisobjekt, damit ein
 kaputter Link den Lauf nicht abbricht.
+
+## Vorschauseite und Releases
+
+`docs/` ist zweierlei zugleich: Bildquelle für die README **und** Wurzel der
+GitHub-Pages-Seite. Deshalb liegen dort `index.html`, `site.css`, die
+JPG-Screenshots und unter `demo/` ein echter, eingecheckter Report.
+
+* `.github/workflows/static.yml` veröffentlicht **nur `docs/`**, nicht das
+  Repository. Sonst würde die `index.html` eines lokalen Laufs die Vorschauseite
+  überschreiben. Aus demselben Grund ignoriert `.gitignore` die Wurzelausgabe —
+  mit führendem Schrägstrich, sonst verschwände auch `docs/demo/index.html`.
+* `.github/workflows/release.yml` legt bei jedem Push auf `main` ein Release an,
+  falls die Version aus `package.json` noch keines hat. Auslöser ist also die
+  Versionsnummer, nicht der Commit.
+* Das ZIP entsteht mit `git archive` und respektiert damit zwei Dinge, die eine
+  handgebaute Zip-Datei verlöre: die `export-ignore`-Regeln aus `.gitattributes`
+  und die CRLF-Zeilenenden von `screenshotter.cmd`.
+* Wer die Bilder unter `docs/*.jpg` erneuert, sollte vorher `npm run demo`
+  laufen lassen — sonst zeigen Vorschauseite und README verschiedene Stände.
 
 ## Konventionen
 
@@ -148,6 +169,12 @@ und keine Proxy-Angabe in `/api/state`. Wer hier etwas ändert, sollte
 Rebinding-Prüfung muss `node:http` direkt verwendet werden — sonst prüft der
 Test nichts.
 
+**Heredocs in GitHub-Workflows.** In einem `run: |`-Block entfernt YAML die
+gemeinsame Einrückung. Der Terminator eines Heredocs landet dadurch auf Spalte 0
+und funktioniert — aber nur, wenn er genauso eingerückt ist wie der Rest. Solche
+Skripte lassen sich lokal prüfen: YAML parsen, `run` herausziehen, mit `bash -e`
+ausführen. Genau so wurde `release.yml` verifiziert.
+
 **Keine rohen ESC-Bytes im Quelltext.** ANSI-Sequenzen als `\u001b` schreiben,
 nicht als literales Steuerzeichen.
 
@@ -179,8 +206,8 @@ HTML-Zeichenkettenprüfungen alle durchgerutscht.
 
 * Frontend-Frameworks, CSS-Präprozessoren, Bundler.
 * Weitere Laufzeit-Abhängigkeiten ohne sehr guten Grund.
-* Generierte Ausgaben (`index.html`, `report.json`, `assets/`, `screenshots/`)
-  im Repository — außer der Nutzer will sie bewusst über GitHub Pages
-  veröffentlichen. `.gitignore` enthält dafür vorbereitete Zeilen.
+* Generierte Ausgaben eines Laufs im Projektordner (`index.html`, `report.json`,
+  `assets/`, `screenshots/`) — die ignoriert `.gitignore`. Der Demo-Report unter
+  `docs/demo/` ist die bewusste Ausnahme: er ist die Vorschau auf GitHub Pages.
 * Die Proxy-URL in `report.json`: sie wird bewusst weggelassen, damit interne
   Adressen nicht in einem veröffentlichten Report landen.

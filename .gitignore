@@ -9,10 +9,10 @@ Thumbs.db
 # Zwischendateien der Thumbnail-Erzeugung (werden normalerweise selbst aufgeräumt)
 screenshots/.thumb-*.html
 
-# Der generierte Report wird bewusst NICHT ignoriert, damit ihn der
-# GitHub-Pages-Workflow (.github/workflows/static.yml) veröffentlichen kann.
-# Wenn die Ausgabe nicht im Repository landen soll, hier einkommentieren:
-# index.html
-# report.json
-# assets/
-# screenshots/
+# Ausgabe eines lokalen Laufs im Projektordner.
+# Die führenden Schrägstriche sind wichtig: ohne sie würde auch der
+# eingecheckte Demo-Report unter docs/demo/ verschwinden.
+/index.html
+/report.json
+/assets/
+/screenshots/
