@@ -1,0 +1,36 @@
+{
+  "name": "screenshotter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Leichtgewichtiges CLI zum Erstellen von Full-Page-Screenshots und Generieren eines statischen HTML-Reports.",
+  "type": "module",
+  "bin": {
+    "screenshotter": "./screenshotter.js"
+  },
+  "main": "screenshotter.js",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "start": "node screenshotter.js",
+    "shots": "node screenshotter.js",
+    "test": "node --test \"test/*.test.js\"",
+    "test:unit": "node --test test/units.test.js",
+    "test:e2e": "node --test test/e2e.test.js",
+    "browser": "playwright install chromium",
+    "browser:deps": "playwright install --with-deps chromium",
+    "clean": "node -e \"import('node:fs').then(fs=>{for(const p of ['screenshots','index.html','report.json','assets'])fs.rmSync(p,{recursive:true,force:true});console.log('output entfernt')})\""
+  },
+  "keywords": [
+    "screenshot",
+    "full-page",
+    "playwright",
+    "cli",
+    "html-report",
+    "static-site"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.62.1"
+  }
+}

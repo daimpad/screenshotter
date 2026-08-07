@@ -1,0 +1,10 @@
+# urls.txt — eine URL pro Zeile.
+#
+#   * Leere Zeilen und Zeilen, die mit "#" oder "//" beginnen, werden ignoriert.
+#   * Fehlt das Schema, wird https:// ergänzt (example.com -> https://example.com).
+#   * Optionales Label nach einem senkrechten Strich: URL | Anzeigename
+#   * Doppelte URLs werden automatisch übersprungen.
+
+https://example.com                 | Beispielseite
+https://www.wikipedia.org           | Wikipedia Portal
+https://developer.mozilla.org/de/   | MDN Web Docs
