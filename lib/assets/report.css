@@ -13,6 +13,7 @@
   --text-faint: #858ca1;
   --accent: #3b5bdb;
   --accent-soft: #e7ecfd;
+  --on-accent: #ffffff;
   --ok: #157f4a;
   --ok-soft: #dff5e8;
   --warn: #9a6206;
@@ -40,6 +41,7 @@
     --text-faint: #7d8599;
     --accent: #7f9cff;
     --accent-soft: #202944;
+    --on-accent: #10131c;
     --ok: #6ee7a8;
     --ok-soft: #14311f;
     --warn: #f0c368;
@@ -61,6 +63,7 @@
   --text-faint: #7d8599;
   --accent: #7f9cff;
   --accent-soft: #202944;
+  --on-accent: #10131c;
   --ok: #6ee7a8;
   --ok-soft: #14311f;
   --warn: #f0c368;
@@ -74,6 +77,12 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* Ohne diese Regel würde jede eigene display-Angabe das Attribut [hidden]
+   überstimmen — und darüber filtert und schaltet das JavaScript. */
+[hidden] {
+  display: none !important;
 }
 
 html {

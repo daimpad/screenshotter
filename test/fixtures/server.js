@@ -62,6 +62,14 @@ export async function startServer() {
   const server = http.createServer((request, response) => {
     const url = new URL(request.url, 'http://localhost');
 
+    if (url.pathname === '/slow') {
+      setTimeout(() => {
+        response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+        response.end(PAGES['/short']);
+      }, 1200);
+      return;
+    }
+
     if (url.pathname === '/redirect') {
       response.writeHead(302, { location: '/short' });
       response.end();
@@ -105,6 +113,15 @@ export async function reservedDeadOrigin() {
   const { port } = probe.address();
   await new Promise((resolve) => probe.close(resolve));
   return `http://127.0.0.1:${port}`;
+}
+
+/** Einen garantiert freien Port ermitteln (kurz binden, wieder freigeben). */
+export async function freePort() {
+  const probe = http.createServer();
+  await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
+  const { port } = probe.address();
+  await new Promise((resolve) => probe.close(resolve));
+  return port;
 }
 
 /** Breite und Höhe eines PNG aus dem IHDR-Chunk lesen. */

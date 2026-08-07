@@ -14,7 +14,9 @@ dazu eine durchsuchbare Galerie, die auf jedem Webserver läuft.
 [![Plattformen](https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#windows-einfach-doppelklicken)
 [![Lizenz](https://img.shields.io/badge/Lizenz-MIT-green)](#lizenz)
 
-<img src="docs/report-tabelle.jpg" alt="Der erzeugte Report mit Kennzahlen, Suchfeld und sortierbarer Screenshot-Tabelle" width="100%">
+<img src="docs/oberflaeche.jpg" alt="Die Weboberfläche mit URL-Eingabefeld sowie Geräte- und Formatwahl" width="100%">
+
+<sub>Die Weboberfläche — <code>node screenshotter.js --serve</code>. Es geht auch ganz ohne, siehe unten.</sub>
 
 </div>
 
@@ -33,6 +35,7 @@ daneben, die man einfach auf den Webserver kopiert oder als Link verschickt.
 * 🧱 **Kein Framework, kein Build** — der Report ist handgeschriebenes HTML, CSS und JavaScript.
 * 🗃️ **Keine Datenbank** — alles liegt flach im Dateisystem.
 * 🌍 **Läuft überall** — Apache/LAMP, nginx, GitHub Pages, S3 oder per Doppelklick über `file://`.
+* 🖱️ **Mit oder ohne Kommandozeile** — Weboberfläche im Browser oder klassisch als CLI.
 * ♿ **Auch ohne JavaScript** — beide Tabellen stehen komplett im HTML; JS ergänzt nur den Komfort.
 
 ---
@@ -44,6 +47,12 @@ git clone https://github.com/daimpad/screenshotter.git
 cd screenshotter
 npm install                      # Chromium holt sich das Tool beim ersten Lauf selbst
 
+node screenshotter.js --serve    # Weboberfläche im Browser
+```
+
+Oder ganz ohne Browser:
+
+```bash
 node screenshotter.js --init     # urls.txt anlegen
 #  ... URLs eintragen ...
 node screenshotter.js --open     # loslegen und den Report öffnen
@@ -52,7 +61,7 @@ node screenshotter.js --open     # loslegen und den Report öffnen
 So sieht der Lauf aus:
 
 ```text
-  screenshotter v1.1.0
+  screenshotter v1.2.0
 
   7 URL(s) aus urls.txt · Desktop 1440×900 · Full-Page · 3 parallel · Ziel .
 
@@ -68,6 +77,42 @@ So sieht der Lauf aus:
 
 > **Windows?** Dann brauchst du gar keine Kommandozeile —
 > [`screenshotter.cmd` doppelklicken](#windows-einfach-doppelklicken).
+
+---
+
+## Weboberfläche
+
+```bash
+node screenshotter.js --serve --open
+```
+
+Startet einen kleinen Server auf `http://127.0.0.1:8080` und öffnet ihn im
+Browser. URLs eintragen, Gerät wählen, Knopf drücken — der Fortschritt läuft
+live mit, am Ende steht der Link zum Report.
+
+<img src="docs/oberflaeche-lauf.jpg" alt="Laufender Auftrag mit Fortschrittsbalken, Ergebnisliste und Klartext-Fehlern" width="100%">
+
+* Dieselbe Maschine wie auf der Kommandozeile: Full-Page, parallele Erfassung, Wiederholungen, Klartext-Fehler.
+* Die URL-Liste lässt sich per Knopfdruck aus `urls.txt` laden und wieder dorthin speichern — beide Wege bleiben synchron.
+* Ein laufender Auftrag kann abgebrochen werden; bereits begonnene Seiten werden sauber zu Ende gebracht.
+* Der fertige Report ist unter `/report/` direkt aus der Oberfläche erreichbar.
+
+**Zur Sicherheit:** Der Server bindet ausschließlich an `127.0.0.1` und ist damit
+nur von diesem Rechner erreichbar. Er lädt auf Zuruf beliebige URLs und hat keine
+Anmeldung — deshalb gehört er nicht ins offene Netz. Anfragen mit fremdem
+`Host`-Header werden abgewiesen (Schutz gegen DNS-Rebinding). Wer `--host`
+trotzdem umstellt, bekommt eine deutliche Warnung.
+
+| Option | Standard | Bedeutung |
+|---|---|---|
+| `-s, --serve` | – | Weboberfläche starten |
+| `--port <n>` | `8080` | Port |
+| `--host <adresse>` | `127.0.0.1` | Bindeadresse |
+| `--open` | – | Browser gleich öffnen |
+
+Alle übrigen Optionen der Kommandozeile dienen als Vorbelegung des Formulars:
+`node screenshotter.js --serve --preset mobile -c 8` startet die Oberfläche mit
+Smartphone-Profil und acht parallelen Seiten.
 
 ---
 
@@ -131,15 +176,17 @@ den Browser, fragt dann kurz nach:
 ```text
   In urls.txt stehen aktuell 3 URL(s).
 
-    [1]  Screenshots jetzt erstellen
-    [2]  urls.txt bearbeiten
-    [3]  Beenden
+    [1]  Weboberflaeche oeffnen  (empfohlen)
+    [2]  Screenshots direkt erstellen
+    [3]  urls.txt im Editor bearbeiten
+    [4]  Beenden
 
     Auswahl:
 ```
 
-Danach öffnet sich der fertige Report im Browser. Ab dem zweiten Start sind es
-nur noch Doppelklick, <kbd>1</kbd>, fertig.
+<kbd>1</kbd> öffnet die [Weboberfläche](#weboberfläche) im Browser — dort geht
+alles per Maus. <kbd>2</kbd> arbeitet `urls.txt` direkt ab und öffnet danach den
+Report. Ab dem zweiten Start entfällt die Einrichtung.
 
 **Node.js** ist die einzige Software, die von Hand installiert werden muss —
 die [LTS-Version](https://nodejs.org/de/download) mit Standardeinstellungen genügt.
@@ -422,7 +469,7 @@ node -e "console.log(require('./report.json').results.filter(r=>r.state==='error
 
 ```json
 {
-  "generator": "screenshotter v1.1.0",
+  "generator": "screenshotter v1.2.0",
   "generatedAt": "2026-08-07T15:19:44.512Z",
   "source": "urls.txt",
   "options": { "preset": "desktop", "width": 1440, "height": 900, "scale": 1, "fullPage": true, "…": "…" },
@@ -487,6 +534,10 @@ nicht: `npx playwright install chromium`, auf Servern zusätzlich
 `SCREENSHOTTER_CHROMIUM`. Mit `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` unterbleibt
 der automatische Download.
 
+**`Port 8080 ist schon belegt`**
+Läuft screenshotter bereits in einem anderen Fenster? Sonst einen anderen Port
+wählen: `--port 8081`.
+
 **In Docker oder als root bricht der Start ab**
 `--no-sandbox` verwenden.
 
@@ -533,9 +584,10 @@ Pfade im Report sind relativ.
 ## Entwicklung
 
 ```bash
-npm test           # alles (48 Tests)
+npm test           # alles (59 Tests)
 npm run test:unit  # nur Unit-Tests, ohne Browser
 npm run test:e2e   # kompletter Lauf gegen einen lokalen Testserver
+npm run test:ui    # Weboberfläche im echten Browser
 ```
 
 Die E2E-Tests starten einen kleinen HTTP-Server mit vorbereiteten Seiten (lang,
@@ -554,14 +606,17 @@ lib/
   report.js               Erzeugung von index.html und report.json
   diagnose.js             Chromium-Fehler → Klartext plus Lösungshinweis
   progress.js             Terminal-Ausgabe, Farben, Fortschrittsbalken
+  server.js               Weboberfläche: HTTP-API und Live-Fortschritt
   open.js                 Datei im Standardprogramm öffnen
   errors.js               Fehlertyp für Bedienfehler
   assets/
     report.css            Stylesheet des Reports (wird nach assets/ kopiert)
     report.js             Interaktionen des Reports (wird nach assets/ kopiert)
+    ui.html/ui.css/ui.js  die Weboberfläche
 test/
   units.test.js           Unit-Tests
-  e2e.test.js             End-to-End-Tests
+  e2e.test.js             End-to-End-Tests des CLI
+  server.test.js          Tests der Weboberfläche samt Absicherung
   fixtures/server.js      Testserver und PNG-Hilfsfunktionen
 ```
 

@@ -41,6 +41,38 @@ async function initUrlsFile(filePath, reporter) {
   return 0;
 }
 
+/** Startet die Weboberfläche und bleibt offen, bis der Nutzer abbricht. */
+async function serve(options, reporter) {
+  const { startServer } = await import('./lib/server.js');
+  const server = await startServer(options, reporter);
+
+  const local = options.host === '127.0.0.1' || options.host === 'localhost' || options.host === '::1';
+  reporter.line(`  Weboberfläche läuft: ${reporter.bold(server.url)}`);
+  if (!local) {
+    reporter.line('');
+    reporter.line(`  ${reporter.yellow('Achtung:')} der Dienst ist im Netz erreichbar und hat keine Anmeldung.`);
+    reporter.line(reporter.dim('  Er lädt beliebige URLs auf Zuruf — nur in vertrauenswürdigen Netzen einsetzen.'));
+  }
+  reporter.line(reporter.dim('  Beenden mit Strg+C.'));
+  reporter.line('');
+
+  if (options.open) await openInDefaultApp(server.url);
+
+  await new Promise((resolve) => {
+    const stop = async (signal) => {
+      reporter.line('');
+      reporter.line(reporter.dim(`  Weboberfläche beendet (${signal}).`));
+      await server.close();
+      resolve();
+    };
+    process.once('SIGINT', () => stop('SIGINT'));
+    process.once('SIGTERM', () => stop('SIGTERM'));
+    process.once('SIGHUP', () => stop('SIGHUP'));
+  });
+
+  return 0;
+}
+
 /** Eine abgeschlossene URL als Konsolenzeile. */
 function resultLine(reporter, result) {
   const state = classify(result);
@@ -82,6 +114,7 @@ async function main(argv) {
   reporter.line('');
 
   if (options.init) return initUrlsFile(options.input, reporter);
+  if (options.serve) return serve(options, reporter);
 
   const { targets, duplicates, source } = await collectTargets({
     inputFile: options.input,
