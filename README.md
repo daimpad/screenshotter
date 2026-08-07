@@ -13,10 +13,15 @@ dazu eine durchsuchbare Galerie, die auf jedem Webserver läuft.
 [![Frontend](https://img.shields.io/badge/Frontend-Vanilla%20JS-f7df1e?logo=javascript&logoColor=black)](lib/assets)
 [![Plattformen](https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#windows-einfach-doppelklicken)
 [![Lizenz](https://img.shields.io/badge/Lizenz-MIT-green)](#lizenz)
+[![Website](https://img.shields.io/badge/Vorschau-daimpad.github.io%2Fscreenshotter-3b5bdb)](https://daimpad.github.io/screenshotter/)
 
 <img src="docs/oberflaeche.jpg" alt="Die Weboberfläche mit URL-Eingabefeld sowie Geräte- und Formatwahl" width="100%">
 
 <sub>Die Weboberfläche — <code>node screenshotter.js --serve</code>. Es geht auch ganz ohne, siehe unten.</sub>
+
+<b><a href="https://daimpad.github.io/screenshotter/demo/">Demo-Report ansehen</a></b> ·
+<b><a href="https://github.com/daimpad/screenshotter/releases/latest/download/screenshotter.zip">Herunterladen</a></b> ·
+<b><a href="https://daimpad.github.io/screenshotter/">Vorschauseite</a></b>
 
 </div>
 
@@ -627,6 +632,38 @@ Abhängigkeit wie `sharp` und liefert exakt die gewünschte Kachelgröße.
 Weitere Hinweise für Beitragende — Architektur, Konventionen und die
 Fallstricke, über die dieses Projekt schon gestolpert ist — stehen in
 [`CLAUDE.md`](CLAUDE.md).
+
+---
+
+## Vorschauseite und Releases
+
+Die [Vorschauseite](https://daimpad.github.io/screenshotter/) liegt im Ordner
+`docs/` und wird bei jedem Push auf `main` nach GitHub Pages veröffentlicht.
+Dazu gehört ein **echter, anklickbarer** [Demo-Report](https://daimpad.github.io/screenshotter/demo/),
+erzeugt aus erfundenen Beispielseiten:
+
+```bash
+npm run demo      # baut docs/demo/ neu
+```
+
+Für lesbare URLs im Demo-Report versucht das Skript, die Beispielseiten unter
+`demo.screenshotter.test` auszuliefern — das braucht einen `/etc/hosts`-Eintrag
+und Port 80. Ohne Administratorrechte weicht es auf `127.0.0.1` aus.
+
+**Releases** entstehen automatisch: Bei jedem Push auf `main` prüft
+[`release.yml`](.github/workflows/release.yml) die Version in `package.json`.
+Gibt es dafür noch kein Release, wird eins angelegt — mit `screenshotter.zip`
+als Anhang. Die Versionsnummer ist also der Auslöser:
+
+```bash
+npm version minor --no-git-tag-version   # oder patch / major
+git commit -am "Version 1.4.0" && git push
+```
+
+Das ZIP enthält nur die Laufzeitdateien (CLI, Weboberfläche, Windows-Starter,
+Beispiel-`urls.txt`, README) — Tests, Vorschauseite und Werkzeuge bleiben
+draußen. Gesteuert wird das über `export-ignore` in `.gitattributes`; gepackt
+wird mit `git archive`, damit `screenshotter.cmd` seine CRLF-Zeilenenden behält.
 
 ---
 

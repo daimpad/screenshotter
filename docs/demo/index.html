@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="generator" content="screenshotter v1.3.0">
+  <title>Demo-Report — Nordlicht Studio</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233b5bdb'/%3E%3Crect x='6' y='9' width='20' height='15' rx='2.5' fill='%23fff'/%3E%3Ccircle cx='16' cy='16.5' r='4' fill='%233b5bdb'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/report.css">
+  <script>
+    // Gespeichertes Farbschema vor dem ersten Paint anwenden (kein Flackern).
+    try { var t = localStorage.getItem('screenshotter-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="site-header__top">
+        <div>
+          <h1 class="site-title">Demo-Report — Nordlicht Studio</h1>
+          <p class="site-subtitle">
+            Erstellt am 07.08.2026, 18:36:55 · Quelle: CLI-Argumente · Viewport 1440 × 900 px · <a href="#summary">Zur Zusammenfassung</a>
+          </p>
+        </div>
+        <button type="button" class="theme-toggle" id="theme-toggle">
+          <span aria-hidden="true">◐</span><span data-theme-label>System</span>
+        </button>
+      </div>
+
+      <ul class="stats">
+        <li class="stat">
+          <span class="stat__value">10</span>
+          <span class="stat__label">Seiten</span>
+        </li>
+        <li class="stat stat--ok">
+          <span class="stat__value">7</span>
+          <span class="stat__label">Erfolgreich</span>
+        </li>
+        <li class="stat stat--warn">
+          <span class="stat__value">1</span>
+          <span class="stat__label">Weiterleitungen</span>
+        </li>
+        <li class="stat stat--error">
+          <span class="stat__value">2</span>
+          <span class="stat__label">Fehlgeschlagen</span>
+        </li>
+        <li class="stat">
+          <span class="stat__value">5,5 s</span>
+          <span class="stat__label">Laufzeit</span>
+        </li>
+        <li class="stat">
+          <span class="stat__value">1,2 MB</span>
+          <span class="stat__label">Bilddaten</span>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="section" id="gallery" aria-labelledby="gallery-title">
+      <div class="section__head">
+        <h2 class="section__title" id="gallery-title">Screenshots</h2>
+        <p class="section__hint">Vorschaubild anklicken für die Lightbox · Spaltenköpfe sortieren · <kbd>/</kbd> springt in die Suche</p>
+      </div>
+
+      <div class="toolbar">
+        <input type="search" id="search" class="search" placeholder="Suchen …  (Taste /)" aria-label="Tabelle durchsuchen">
+        <div class="filters" role="group" aria-label="Nach Status filtern">
+          <button type="button" class="chip" data-filter="all" aria-pressed="true">Alle</button>
+          <button type="button" class="chip" data-filter="ok" aria-pressed="false">OK</button>
+          <button type="button" class="chip" data-filter="redirect" aria-pressed="false">Weiterleitung</button>
+          <button type="button" class="chip" data-filter="error" aria-pressed="false">Fehler</button>
+        </div>
+        <div class="views" role="group" aria-label="Ansicht wählen">
+          <button type="button" class="chip" data-view="table" aria-pressed="true">Tabelle</button>
+          <button type="button" class="chip" data-view="grid" aria-pressed="false">Galerie</button>
+        </div>
+        <span class="result-count" id="result-count" aria-live="polite">10 Einträge</span>
+      </div>
+
+      <div class="table-card" id="shots-card">
+        <div class="table-scroll">
+          <table id="shots-table" data-sortable>
+            <caption class="visually-hidden">Alle erfassten Seiten mit Vorschaubild, Status, Seitenhöhe, Dauer und Dateiname</caption>
+            <thead>
+              <tr>
+                <th class="sortable col-index" data-column="0" data-sort-type="number" scope="col">#</th>
+                <th class="col-preview" scope="col">Vorschau</th>
+                <th class="sortable" data-column="2" data-sort-type="text" aria-sort="ascending" scope="col">Seite</th>
+                <th class="sortable" data-column="3" data-sort-type="number" scope="col">Status</th>
+                <th class="sortable" data-column="4" data-sort-type="number" scope="col">Seitenhöhe</th>
+                <th class="sortable" data-column="5" data-sort-type="number" scope="col">Dauer</th>
+                <th class="sortable" data-column="6" data-sort-type="text" scope="col">Datei</th>
+              </tr>
+            </thead>
+            <tbody>
+        <tr data-state="ok" data-search="http://demo.screenshotter.test/ nordlicht studio — digitale produkte aus kiel 001-demo-screenshotter-test.png 200">
+          <td class="col-index" data-label="#" data-sort-value="1">1</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/001-demo-screenshotter-test.png"
+               data-url="http://demo.screenshotter.test/"
+               data-title="Nordlicht Studio — Digitale Produkte aus Kiel"
+               data-status="HTTP 200"
+               data-time="07.08.2026, 18:36:50">
+              <img src="screenshots/thumbs/001-demo-screenshotter-test.png" alt="Screenshot von http://demo.screenshotter.test/" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/">
+            <p class="page-title">Nordlicht Studio — Digitale Produkte aus Kiel</p>
+            <a class="page-url" href="http://demo.screenshotter.test/" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/</a>
+          </td>
+          <td data-label="Status" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="2802">1.440 × 2.802 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="2230">2,2 s</td>
+          <td data-label="Datei" data-sort-value="001-demo-screenshotter-test.png"><a class="file-link" href="screenshots/001-demo-screenshotter-test.png" target="_blank" rel="noopener">001-demo-screenshotter-test.png</a>
+            <span class="file-meta">553 KB</span></td>
+        </tr>
+        <tr data-state="error" data-search="http://demo.screenshotter.test/alt-produkt nicht mehr verfügbar 009-demo-screenshotter-test-alt-produkt.png 410">
+          <td class="col-index" data-label="#" data-sort-value="9">9</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/009-demo-screenshotter-test-alt-produkt.png"
+               data-url="http://demo.screenshotter.test/alt-produkt"
+               data-title="Nicht mehr verfügbar"
+               data-status="HTTP 410 · Fehler"
+               data-time="07.08.2026, 18:36:54">
+              <img src="screenshots/thumbs/009-demo-screenshotter-test-alt-produkt.png" alt="Screenshot von http://demo.screenshotter.test/alt-produkt" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/alt-produkt">
+            <p class="page-title">Nicht mehr verfügbar</p>
+            <a class="page-url" href="http://demo.screenshotter.test/alt-produkt" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/alt-produkt</a>
+          </td>
+          <td data-label="Status" data-sort-value="410">
+            <span class="badge badge--error" title="Gone">410</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="900">1.440 × 900 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="1221">1,2 s</td>
+          <td data-label="Datei" data-sort-value="009-demo-screenshotter-test-alt-produkt.png"><a class="file-link" href="screenshots/009-demo-screenshotter-test-alt-produkt.png" target="_blank" rel="noopener">009-demo-screenshotter-test-alt-produkt.png</a>
+            <span class="file-meta">36 KB</span></td>
+        </tr>
+        <tr data-state="ok" data-search="http://demo.screenshotter.test/journal journal — nordlicht studio 006-demo-screenshotter-test-journal.png 200">
+          <td class="col-index" data-label="#" data-sort-value="6">6</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/006-demo-screenshotter-test-journal.png"
+               data-url="http://demo.screenshotter.test/journal"
+               data-title="Journal — Nordlicht Studio"
+               data-status="HTTP 200"
+               data-time="07.08.2026, 18:36:52">
+              <img src="screenshots/thumbs/006-demo-screenshotter-test-journal.png" alt="Screenshot von http://demo.screenshotter.test/journal" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/journal">
+            <p class="page-title">Journal — Nordlicht Studio</p>
+            <a class="page-url" href="http://demo.screenshotter.test/journal" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/journal</a>
+          </td>
+          <td data-label="Status" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="900">1.440 × 900 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="1336">1,3 s</td>
+          <td data-label="Datei" data-sort-value="006-demo-screenshotter-test-journal.png"><a class="file-link" href="screenshots/006-demo-screenshotter-test-journal.png" target="_blank" rel="noopener">006-demo-screenshotter-test-journal.png</a>
+            <span class="file-meta">54 KB</span></td>
+        </tr>
+        <tr data-state="redirect" data-search="http://demo.screenshotter.test/karriere team — nordlicht studio 008-demo-screenshotter-test-karriere.png 200">
+          <td class="col-index" data-label="#" data-sort-value="8">8</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/008-demo-screenshotter-test-karriere.png"
+               data-url="http://demo.screenshotter.test/karriere"
+               data-title="Team — Nordlicht Studio"
+               data-status="HTTP 200"
+               data-time="07.08.2026, 18:36:54">
+              <img src="screenshots/thumbs/008-demo-screenshotter-test-karriere.png" alt="Screenshot von http://demo.screenshotter.test/karriere" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/karriere">
+            <p class="page-title">Team — Nordlicht Studio</p>
+            <a class="page-url" href="http://demo.screenshotter.test/karriere" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/karriere</a>
+            <p class="page-redirect">→ http://demo.screenshotter.test/team</p>
+          </td>
+          <td data-label="Status" data-sort-value="200">
+            <span class="badge badge--warn" title="Weiterleitung nach http://demo.screenshotter.test/team">200</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="945">1.440 × 945 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="1275">1,3 s</td>
+          <td data-label="Datei" data-sort-value="008-demo-screenshotter-test-karriere.png"><a class="file-link" href="screenshots/008-demo-screenshotter-test-karriere.png" target="_blank" rel="noopener">008-demo-screenshotter-test-karriere.png</a>
+            <span class="file-meta">45 KB</span></td>
+        </tr>
+        <tr data-state="ok" data-search="http://demo.screenshotter.test/kontakt kontakt — nordlicht studio 007-demo-screenshotter-test-kontakt.png 200">
+          <td class="col-index" data-label="#" data-sort-value="7">7</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/007-demo-screenshotter-test-kontakt.png"
+               data-url="http://demo.screenshotter.test/kontakt"
+               data-title="Kontakt — Nordlicht Studio"
+               data-status="HTTP 200"
+               data-time="07.08.2026, 18:36:53">
+              <img src="screenshots/thumbs/007-demo-screenshotter-test-kontakt.png" alt="Screenshot von http://demo.screenshotter.test/kontakt" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/kontakt">
+            <p class="page-title">Kontakt — Nordlicht Studio</p>
+            <a class="page-url" href="http://demo.screenshotter.test/kontakt" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/kontakt</a>
+          </td>
+          <td data-label="Status" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="900">1.440 × 900 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="1175">1,2 s</td>
+          <td data-label="Datei" data-sort-value="007-demo-screenshotter-test-kontakt.png"><a class="file-link" href="screenshots/007-demo-screenshotter-test-kontakt.png" target="_blank" rel="noopener">007-demo-screenshotter-test-kontakt.png</a>
+            <span class="file-meta">39 KB</span></td>
+        </tr>
+        <tr data-state="ok" data-search="http://demo.screenshotter.test/leistungen leistungen — nordlicht studio 002-demo-screenshotter-test-leistungen.png 200">
+          <td class="col-index" data-label="#" data-sort-value="2">2</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/002-demo-screenshotter-test-leistungen.png"
+               data-url="http://demo.screenshotter.test/leistungen"
+               data-title="Leistungen — Nordlicht Studio"
+               data-status="HTTP 200"
+               data-time="07.08.2026, 18:36:50">
+              <img src="screenshots/thumbs/002-demo-screenshotter-test-leistungen.png" alt="Screenshot von http://demo.screenshotter.test/leistungen" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/leistungen">
+            <p class="page-title">Leistungen — Nordlicht Studio</p>
+            <a class="page-url" href="http://demo.screenshotter.test/leistungen" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/leistungen</a>
+          </td>
+          <td data-label="Status" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="1530">1.440 × 1.530 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="1645">1,6 s</td>
+          <td data-label="Datei" data-sort-value="002-demo-screenshotter-test-leistungen.png"><a class="file-link" href="screenshots/002-demo-screenshotter-test-leistungen.png" target="_blank" rel="noopener">002-demo-screenshotter-test-leistungen.png</a>
+            <span class="file-meta">115 KB</span></td>
+        </tr>
+        <tr data-state="ok" data-search="http://demo.screenshotter.test/preise preise — nordlicht studio 004-demo-screenshotter-test-preise.png 200">
+          <td class="col-index" data-label="#" data-sort-value="4">4</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/004-demo-screenshotter-test-preise.png"
+               data-url="http://demo.screenshotter.test/preise"
+               data-title="Preise — Nordlicht Studio"
+               data-status="HTTP 200"
+               data-time="07.08.2026, 18:36:52">
+              <img src="screenshots/thumbs/004-demo-screenshotter-test-preise.png" alt="Screenshot von http://demo.screenshotter.test/preise" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/preise">
+            <p class="page-title">Preise — Nordlicht Studio</p>
+            <a class="page-url" href="http://demo.screenshotter.test/preise" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/preise</a>
+          </td>
+          <td data-label="Status" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="1231">1.440 × 1.231 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="1296">1,3 s</td>
+          <td data-label="Datei" data-sort-value="004-demo-screenshotter-test-preise.png"><a class="file-link" href="screenshots/004-demo-screenshotter-test-preise.png" target="_blank" rel="noopener">004-demo-screenshotter-test-preise.png</a>
+            <span class="file-meta">97 KB</span></td>
+        </tr>
+        <tr data-state="ok" data-search="http://demo.screenshotter.test/referenzen referenzen — nordlicht studio 003-demo-screenshotter-test-referenzen.png 200">
+          <td class="col-index" data-label="#" data-sort-value="3">3</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/003-demo-screenshotter-test-referenzen.png"
+               data-url="http://demo.screenshotter.test/referenzen"
+               data-title="Referenzen — Nordlicht Studio"
+               data-status="HTTP 200"
+               data-time="07.08.2026, 18:36:50">
+              <img src="screenshots/thumbs/003-demo-screenshotter-test-referenzen.png" alt="Screenshot von http://demo.screenshotter.test/referenzen" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/referenzen">
+            <p class="page-title">Referenzen — Nordlicht Studio</p>
+            <a class="page-url" href="http://demo.screenshotter.test/referenzen" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/referenzen</a>
+          </td>
+          <td data-label="Status" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="1392">1.440 × 1.392 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="2227">2,2 s</td>
+          <td data-label="Datei" data-sort-value="003-demo-screenshotter-test-referenzen.png"><a class="file-link" href="screenshots/003-demo-screenshotter-test-referenzen.png" target="_blank" rel="noopener">003-demo-screenshotter-test-referenzen.png</a>
+            <span class="file-meta">227 KB</span></td>
+        </tr>
+        <tr data-state="ok" data-search="http://demo.screenshotter.test/team team — nordlicht studio 005-demo-screenshotter-test-team.png 200">
+          <td class="col-index" data-label="#" data-sort-value="5">5</td>
+          <td class="col-preview" data-label="Vorschau">
+            <a class="shot-link" href="screenshots/005-demo-screenshotter-test-team.png"
+               data-url="http://demo.screenshotter.test/team"
+               data-title="Team — Nordlicht Studio"
+               data-status="HTTP 200"
+               data-time="07.08.2026, 18:36:52">
+              <img src="screenshots/thumbs/005-demo-screenshotter-test-team.png" alt="Screenshot von http://demo.screenshotter.test/team" loading="lazy" decoding="async">
+            </a>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://demo.screenshotter.test/team">
+            <p class="page-title">Team — Nordlicht Studio</p>
+            <a class="page-url" href="http://demo.screenshotter.test/team" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/team</a>
+          </td>
+          <td data-label="Status" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="945">1.440 × 945 px</td>
+          <td class="num" data-label="Dauer" data-sort-value="1348">1,3 s</td>
+          <td data-label="Datei" data-sort-value="005-demo-screenshotter-test-team.png"><a class="file-link" href="screenshots/005-demo-screenshotter-test-team.png" target="_blank" rel="noopener">005-demo-screenshotter-test-team.png</a>
+            <span class="file-meta">45 KB</span></td>
+        </tr>
+        <tr data-state="error" data-search="http://nicht-erreichbar.screenshotter.test/ 010-nicht-erreichbar-screenshotter-test.png domain nicht gefunden">
+          <td class="col-index" data-label="#" data-sort-value="10">10</td>
+          <td class="col-preview" data-label="Vorschau">
+            <div class="shot-missing">Kein Screenshot</div>
+          </td>
+          <td class="page-cell" data-label="Seite" data-sort-value="http://nicht-erreichbar.screenshotter.test/">
+            <a class="page-url" href="http://nicht-erreichbar.screenshotter.test/" target="_blank" rel="noopener noreferrer">http://nicht-erreichbar.screenshotter.test/</a>
+            <p class="page-error">Domain nicht gefunden</p>
+            <p class="page-hint">Schreibweise der URL prüfen. Existiert die Domain und ist DNS erreichbar?</p>
+          </td>
+          <td data-label="Status" data-sort-value="999">
+            <span class="badge badge--error">Fehler</span>
+          </td>
+          <td class="num" data-label="Seitenhöhe" data-sort-value="0">–</td>
+          <td class="num" data-label="Dauer" data-sort-value="80">80 ms</td>
+          <td data-label="Datei" data-sort-value="010-nicht-erreichbar-screenshotter-test.png"><span class="file-meta">–</span></td>
+        </tr>
+        <tr class="empty-row" id="no-results" hidden><td colspan="7">Keine Treffer für den aktuellen Filter.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="summary" aria-labelledby="summary-title">
+      <div class="section__head">
+        <h2 class="section__title" id="summary-title">Zusammenfassung</h2>
+        <p class="section__hint">Alle Ergebnisse in Aufrufreihenfolge · <a href="report.json">report.json</a></p>
+      </div>
+
+      <div class="table-card">
+        <div class="table-scroll">
+          <table id="summary-table" data-sortable>
+            <caption class="visually-hidden">Übersicht über URL, Statuscode, Zeitstempel und Dateiname</caption>
+            <thead>
+              <tr>
+                <th class="sortable" data-column="0" data-sort-type="text" scope="col">URL</th>
+                <th class="sortable" data-column="1" data-sort-type="number" scope="col">Statuscode</th>
+                <th class="sortable" data-column="2" data-sort-type="text" scope="col">Zeitstempel</th>
+                <th class="sortable" data-column="3" data-sort-type="text" scope="col">Dateiname</th>
+              </tr>
+            </thead>
+            <tbody>
+        <tr data-state="ok">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/">
+            <a class="page-url" href="http://demo.screenshotter.test/" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:50.080Z">
+            <time datetime="2026-08-07T18:36:50.080Z">07.08.2026, 18:36:50</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="001-demo-screenshotter-test.png"><a class="file-link" href="screenshots/001-demo-screenshotter-test.png" target="_blank" rel="noopener">001-demo-screenshotter-test.png</a></td>
+        </tr>
+        <tr data-state="ok">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/leistungen">
+            <a class="page-url" href="http://demo.screenshotter.test/leistungen" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/leistungen</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:50.080Z">
+            <time datetime="2026-08-07T18:36:50.080Z">07.08.2026, 18:36:50</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="002-demo-screenshotter-test-leistungen.png"><a class="file-link" href="screenshots/002-demo-screenshotter-test-leistungen.png" target="_blank" rel="noopener">002-demo-screenshotter-test-leistungen.png</a></td>
+        </tr>
+        <tr data-state="ok">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/referenzen">
+            <a class="page-url" href="http://demo.screenshotter.test/referenzen" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/referenzen</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:50.080Z">
+            <time datetime="2026-08-07T18:36:50.080Z">07.08.2026, 18:36:50</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="003-demo-screenshotter-test-referenzen.png"><a class="file-link" href="screenshots/003-demo-screenshotter-test-referenzen.png" target="_blank" rel="noopener">003-demo-screenshotter-test-referenzen.png</a></td>
+        </tr>
+        <tr data-state="ok">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/preise">
+            <a class="page-url" href="http://demo.screenshotter.test/preise" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/preise</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:52.373Z">
+            <time datetime="2026-08-07T18:36:52.373Z">07.08.2026, 18:36:52</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="004-demo-screenshotter-test-preise.png"><a class="file-link" href="screenshots/004-demo-screenshotter-test-preise.png" target="_blank" rel="noopener">004-demo-screenshotter-test-preise.png</a></td>
+        </tr>
+        <tr data-state="ok">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/team">
+            <a class="page-url" href="http://demo.screenshotter.test/team" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/team</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:52.640Z">
+            <time datetime="2026-08-07T18:36:52.640Z">07.08.2026, 18:36:52</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="005-demo-screenshotter-test-team.png"><a class="file-link" href="screenshots/005-demo-screenshotter-test-team.png" target="_blank" rel="noopener">005-demo-screenshotter-test-team.png</a></td>
+        </tr>
+        <tr data-state="ok">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/journal">
+            <a class="page-url" href="http://demo.screenshotter.test/journal" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/journal</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:52.653Z">
+            <time datetime="2026-08-07T18:36:52.653Z">07.08.2026, 18:36:52</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="006-demo-screenshotter-test-journal.png"><a class="file-link" href="screenshots/006-demo-screenshotter-test-journal.png" target="_blank" rel="noopener">006-demo-screenshotter-test-journal.png</a></td>
+        </tr>
+        <tr data-state="ok">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/kontakt">
+            <a class="page-url" href="http://demo.screenshotter.test/kontakt" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/kontakt</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="200">
+            <span class="badge badge--ok" title="OK">200</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:53.809Z">
+            <time datetime="2026-08-07T18:36:53.809Z">07.08.2026, 18:36:53</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="007-demo-screenshotter-test-kontakt.png"><a class="file-link" href="screenshots/007-demo-screenshotter-test-kontakt.png" target="_blank" rel="noopener">007-demo-screenshotter-test-kontakt.png</a></td>
+        </tr>
+        <tr data-state="redirect">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/karriere">
+            <a class="page-url" href="http://demo.screenshotter.test/karriere" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/karriere</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="200">
+            <span class="badge badge--warn" title="Weiterleitung nach http://demo.screenshotter.test/team">200</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:54.166Z">
+            <time datetime="2026-08-07T18:36:54.166Z">07.08.2026, 18:36:54</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="008-demo-screenshotter-test-karriere.png"><a class="file-link" href="screenshots/008-demo-screenshotter-test-karriere.png" target="_blank" rel="noopener">008-demo-screenshotter-test-karriere.png</a></td>
+        </tr>
+        <tr data-state="error">
+          <td data-label="URL" data-sort-value="http://demo.screenshotter.test/alt-produkt">
+            <a class="page-url" href="http://demo.screenshotter.test/alt-produkt" target="_blank" rel="noopener noreferrer">http://demo.screenshotter.test/alt-produkt</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="410">
+            <span class="badge badge--error" title="Gone">410</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:54.220Z">
+            <time datetime="2026-08-07T18:36:54.220Z">07.08.2026, 18:36:54</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="009-demo-screenshotter-test-alt-produkt.png"><a class="file-link" href="screenshots/009-demo-screenshotter-test-alt-produkt.png" target="_blank" rel="noopener">009-demo-screenshotter-test-alt-produkt.png</a></td>
+        </tr>
+        <tr data-state="error">
+          <td data-label="URL" data-sort-value="http://nicht-erreichbar.screenshotter.test/">
+            <a class="page-url" href="http://nicht-erreichbar.screenshotter.test/" target="_blank" rel="noopener noreferrer">http://nicht-erreichbar.screenshotter.test/</a>
+          </td>
+          <td data-label="Statuscode" data-sort-value="999">
+            <span class="badge badge--error">Fehler</span>
+          </td>
+          <td class="num" data-label="Zeitstempel" data-sort-value="2026-08-07T18:36:55.127Z">
+            <time datetime="2026-08-07T18:36:55.127Z">07.08.2026, 18:36:55</time>
+          </td>
+          <td data-label="Dateiname" data-sort-value="010-nicht-erreichbar-screenshotter-test.png"><span class="file-meta">–</span></td>
+        </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td data-label="URL"><strong>10 URLs</strong></td>
+                <td data-label="Statuscode">7 OK · 1 Redirect · 2 Fehler</td>
+                <td class="num" data-label="Zeitstempel">5,5 s</td>
+                <td class="num" data-label="Dateiname">1,2 MB</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      Erzeugt mit <strong>screenshotter</strong> v1.3.0 · Chromium via Playwright ·
+      Full-Page-Screenshots ·
+      Rohdaten: <a href="report.json">report.json</a>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Screenshot-Vorschau">
+    <div class="lightbox__bar">
+      <span class="lightbox__meta">
+        <span class="lightbox__title"></span>
+        <span class="lightbox__sub"></span>
+      </span>
+      <span class="lightbox__actions">
+        <button type="button" class="lb-btn" data-lb="prev" aria-label="Vorheriger Screenshot">←</button>
+        <span class="lightbox__counter"></span>
+        <button type="button" class="lb-btn" data-lb="next" aria-label="Nächster Screenshot">→</button>
+        <a class="lb-btn" data-lb="open" href="#" target="_blank" rel="noopener">Original</a>
+        <button type="button" class="lb-btn" data-lb="close" aria-label="Schließen">✕</button>
+      </span>
+    </div>
+    <div class="lightbox__stage">
+      <img class="lightbox__img" data-lb="image" alt="" title="Klicken für Originalgröße">
+    </div>
+  </div>
+
+  <script src="assets/report.js" defer></script>
+</body>
+</html>

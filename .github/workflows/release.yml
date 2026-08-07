@@ -1,0 +1,125 @@
+# Legt bei jedem Push auf main ein Release an — aber nur, wenn die Version in
+# package.json noch keines hat. Die Versionsnummer ist also der Auslöser:
+# erhöhen, pushen, fertig.
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "release"
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Für die Änderungsliste zwischen zwei Tags wird die Historie gebraucht.
+          fetch-depth: 0
+
+      - name: Version aus package.json lesen
+        id: version
+        run: |
+          value="$(node -p "require('./package.json').version")"
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+          echo "tag=v$value" >> "$GITHUB_OUTPUT"
+          echo "Version in package.json: $value"
+
+      - name: Prüfen, ob es dieses Release schon gibt
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.version.outputs.tag }} existiert bereits — nichts zu tun."
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.version.outputs.tag }} fehlt noch — wird angelegt."
+          fi
+
+      - name: Node einrichten
+        if: steps.check.outputs.needed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Abhängigkeiten und schnelle Tests
+        if: steps.check.outputs.needed == 'true'
+        # Ohne Browser-Download: die Unit-Tests brauchen kein Chromium.
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          npm ci --no-audit --no-fund
+          npm run test:unit
+
+      - name: Paket schnüren
+        if: steps.check.outputs.needed == 'true'
+        # git archive wertet die export-ignore-Regeln aus .gitattributes aus und
+        # liefert screenshotter.cmd mit CRLF aus — beides ist hier wichtig.
+        run: |
+          git archive --worktree-attributes --format=zip \
+            --prefix=screenshotter/ -o screenshotter.zip HEAD
+          unzip -l screenshotter.zip
+
+      - name: Änderungsliste erzeugen
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.value }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          cat > release-notes.md <<'KOPF'
+          ## Loslegen
+
+          **Windows:** `screenshotter.zip` herunterladen, entpacken, `screenshotter.cmd`
+          doppelklicken. Der Starter richtet beim ersten Mal alles ein und bietet die
+          Weboberfläche an. Voraussetzung ist nur [Node.js](https://nodejs.org/de/download)
+          in der LTS-Version.
+
+          **macOS / Linux:**
+
+          ```bash
+          unzip screenshotter.zip && cd screenshotter
+          npm install
+          node screenshotter.js --serve --open
+          ```
+
+          ## Im Paket
+
+          Alles, was zum lokalen Betrieb nötig ist: das CLI, die Weboberfläche, der
+          Windows-Starter und eine Beispiel-`urls.txt`. Chromium lädt das Werkzeug beim
+          ersten Lauf selbst nach. Tests und Entwicklungsdateien sind bewusst nicht dabei —
+          die stehen im Repository.
+
+          KOPF
+
+          PREV="$(git tag --list 'v*' --sort=-v:refname | grep -Fxv "$TAG" | head -1)"
+          if [ -n "$PREV" ]; then
+            echo "## Änderungen seit $PREV" >> release-notes.md
+            echo "" >> release-notes.md
+            git log --no-merges --pretty='- %s' "$PREV..HEAD" >> release-notes.md
+          else
+            echo "## Erstes Release" >> release-notes.md
+            echo "" >> release-notes.md
+            echo "Siehe [README](https://github.com/${{ github.repository }}#readme)." >> release-notes.md
+          fi
+
+          cat release-notes.md
+
+      - name: Release anlegen
+        if: steps.check.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            screenshotter.zip \
+            --title "screenshotter ${{ steps.version.outputs.tag }}" \
+            --notes-file release-notes.md
