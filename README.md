@@ -102,11 +102,13 @@ live mit, am Ende steht der Link zum Report.
 * Ein laufender Auftrag kann abgebrochen werden; bereits begonnene Seiten werden sauber zu Ende gebracht.
 * Der fertige Report ist unter `/report/` direkt aus der Oberfläche erreichbar.
 
-**Zur Sicherheit:** Der Server bindet ausschließlich an `127.0.0.1` und ist damit
-nur von diesem Rechner erreichbar. Er lädt auf Zuruf beliebige URLs und hat keine
-Anmeldung — deshalb gehört er nicht ins offene Netz. Anfragen mit fremdem
-`Host`-Header werden abgewiesen (Schutz gegen DNS-Rebinding). Wer `--host`
-trotzdem umstellt, bekommt eine deutliche Warnung.
+**Zur Sicherheit:** Der Server bindet ausschließlich an `127.0.0.1`, verlangt bei
+jeder verändernden Anfrage ein Sitzungsmerkmal, das nur die eigene Oberfläche
+lesen kann, und weist Anfragen fremder Herkunft ab. Ohne das könnte eine
+beliebige Webseite im Browser des Nutzers Läufe auslösen — und damit Adressen im
+Heimnetz abrufen lassen. Details und die vollständige Liste der Maßnahmen stehen
+in [SECURITY.md](SECURITY.md). Wer `--host` umstellt, bekommt beim Start eine
+deutliche Warnung.
 
 | Option | Standard | Bedeutung |
 |---|---|---|
@@ -589,7 +591,7 @@ Pfade im Report sind relativ.
 ## Entwicklung
 
 ```bash
-npm test           # alles (59 Tests)
+npm test           # alles (68 Tests)
 npm run test:unit  # nur Unit-Tests, ohne Browser
 npm run test:e2e   # kompletter Lauf gegen einen lokalen Testserver
 npm run test:ui    # Weboberfläche im echten Browser
@@ -631,7 +633,8 @@ Abhängigkeit wie `sharp` und liefert exakt die gewünschte Kachelgröße.
 
 Weitere Hinweise für Beitragende — Architektur, Konventionen und die
 Fallstricke, über die dieses Projekt schon gestolpert ist — stehen in
-[`CLAUDE.md`](CLAUDE.md).
+[`CLAUDE.md`](CLAUDE.md). Das Bedrohungsmodell und die Schutzmaßnahmen der
+Weboberfläche stehen in [`SECURITY.md`](SECURITY.md).
 
 ---
 

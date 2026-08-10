@@ -8,7 +8,7 @@
 
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -27,6 +27,7 @@ let workDir;
 let child;
 let base;
 let browser;
+let token;
 
 /** GET mit frei wählbarem Host-Header — `fetch` darf den nicht setzen. */
 function rawGet(port, requestPath, hostHeader) {
@@ -44,6 +45,19 @@ function rawGet(port, requestPath, hostHeader) {
   });
 }
 
+/** Öffnet einen SSE-Strom über node:http und merkt sich die Verbindung. */
+function openEventStream(port, offen) {
+  return new Promise((resolve, reject) => {
+    const request = http.request({ host: '127.0.0.1', port, path: '/api/events', method: 'GET' }, (response) => {
+      response.on('data', () => {});
+      resolve(response.statusCode);
+    });
+    request.on('error', reject);
+    request.end();
+    offen.push(request);
+  });
+}
+
 async function api(pathname, init) {
   const response = await fetch(`${base}${pathname}`, init);
   let payload = null;
@@ -55,9 +69,10 @@ async function api(pathname, init) {
   return { status: response.status, payload };
 }
 
+/** Eine Anfrage, wie sie die eigene Oberfläche stellt — samt Sitzungsmerkmal. */
 const postJson = (body) => ({
   method: 'POST',
-  headers: { 'content-type': 'application/json' },
+  headers: { 'content-type': 'application/json', 'x-screenshotter-token': token },
   body: JSON.stringify(body),
 });
 
@@ -81,6 +96,10 @@ before(async () => {
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
+
+  // Das Sitzungsmerkmal steckt in der ausgelieferten Seite.
+  const html = await (await fetch(`${base}/`)).text();
+  token = (html.match(/name="screenshotter-token" content="([^"]+)"/) ?? [])[1] ?? '';
 
   browser = await launchBrowser({});
 }, { timeout: 180000 });
@@ -296,4 +315,169 @@ test('ein zweiter Lauf wird abgelehnt, solange einer läuft, und Abbrechen greif
   assert.equal(state.status, 'cancelled');
   assert.ok(state.done < 3, `es sollten nicht alle Seiten erfasst worden sein (${state.done})`);
   assert.equal((await api('/api/cancel', postJson({}))).payload.cancelled, false, 'ohne Lauf gibt es nichts abzubrechen');
+});
+
+/* ---------------------------------------------------------- Absicherung */
+
+test('verändernde Anfragen brauchen das Sitzungsmerkmal', async () => {
+  // Gegen den Zustand vor dem Versuch prüfen — frühere Tests hinterlassen einen.
+  const vorher = (await api('/api/state')).payload.run;
+  const nutzlast = JSON.stringify({ urls: 'https://ohne-merkmal.example' });
+  const json = { 'content-type': 'application/json' };
+
+  // Ohne Merkmal — der Kern des CSRF-Schutzes.
+  assert.equal((await fetch(`${base}/api/run`, { method: 'POST', headers: json, body: nutzlast })).status, 403);
+  assert.equal((await fetch(`${base}/api/urls`, { method: 'POST', headers: json, body: '{"text":"x"}' })).status, 403);
+  assert.equal((await fetch(`${base}/api/cancel`, { method: 'POST', headers: json, body: '{}' })).status, 403);
+
+  // Falsches Merkmal zählt nicht.
+  const falsch = { ...json, 'x-screenshotter-token': 'geraten' };
+  assert.equal((await fetch(`${base}/api/run`, { method: 'POST', headers: falsch, body: nutzlast })).status, 403);
+
+  // Ein Formular kann nur diese Inhaltstypen ohne Preflight senden.
+  for (const typ of ['text/plain', 'application/x-www-form-urlencoded', 'multipart/form-data']) {
+    const antwort = await fetch(`${base}/api/run`, {
+      method: 'POST',
+      headers: { 'content-type': typ, 'x-screenshotter-token': token },
+      body: nutzlast,
+    });
+    assert.equal(antwort.status, 403, `${typ} hätte abgelehnt werden müssen`);
+  }
+
+  // Fremde Herkunft, selbst mit gültigem Merkmal.
+  const fremd = await fetch(`${base}/api/run`, {
+    method: 'POST',
+    headers: { ...json, 'x-screenshotter-token': token, origin: 'http://boese.example' },
+    body: nutzlast,
+  });
+  assert.equal(fremd.status, 403);
+
+  const fremdesZiel = await fetch(`${base}/api/run`, {
+    method: 'POST',
+    headers: { ...json, 'x-screenshotter-token': token, 'sec-fetch-site': 'cross-site' },
+    body: nutzlast,
+  });
+  assert.equal(fremdesZiel.status, 403);
+
+  // Der Zustand darf sich durch all das nicht verändert haben.
+  assert.equal((await api('/api/state')).payload.run.startedAt, vorher.startedAt);
+  assert.equal((await api('/api/state')).payload.run.status, vorher.status);
+});
+
+test('eine fremde Seite kann per Formular keinen Lauf auslösen', async () => {
+  // Der Angriff, der vor der Härtung funktioniert hat: ein text/plain-Formular
+  // löst keinen CORS-Preflight aus, und ein passend gebauter Feldname erzeugt
+  // gültiges JSON. Der Browser schickt das mit — nur der Server nimmt es nicht an.
+  const beute = await mkdtemp(path.join(os.tmpdir(), 'screenshotter-beute-'));
+  const angreiferPort = await freePort();
+
+  const nutzlast = JSON.stringify({ urls: `${fixture.origin}/short`, options: { out: beute } });
+  const feldName = `${nutzlast.slice(0, -1)},"x":"`;
+
+  const angreifer = http.createServer((request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(
+      `<!doctype html><meta charset="utf-8"><body>
+       <form id="f" method="POST" enctype="text/plain" action="${base}/api/run">
+         <input name='${feldName.replace(/'/g, '&#39;')}' value='"}'>
+       </form><script>document.getElementById('f').submit();</script>`,
+    );
+  });
+  await new Promise((resolve) => angreifer.listen(angreiferPort, '127.0.0.1', resolve));
+
+  const vorher = (await api('/api/state')).payload.run;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await page.goto(`http://127.0.0.1:${angreiferPort}/`, { waitUntil: 'load' });
+    await page.waitForTimeout(1200);
+
+    const nachher = (await api('/api/state')).payload.run;
+    assert.equal(nachher.startedAt, vorher.startedAt, 'die fremde Seite hat einen Lauf ausgelöst');
+    assert.deepEqual(await readdir(beute), [], 'die fremde Seite hat Dateien schreiben lassen');
+  } finally {
+    await context.close();
+    await new Promise((resolve) => angreifer.close(resolve));
+    await rm(beute, { recursive: true, force: true });
+  }
+});
+
+test('Grenzen greifen: Anfragegröße, Verbindungen, Auftragsgröße', async () => {
+  // Zu großer Körper: saubere Meldung statt abgebrochener Verbindung.
+  const zuGross = await api('/api/urls', postJson({ text: 'x'.repeat(2 * 1024 * 1024) }));
+  assert.equal(zuGross.status, 400);
+  assert.match(zuGross.payload.error, /zu groß/);
+  assert.equal((await api('/api/state')).status, 200, 'der Server muss das überstehen');
+
+  // Zu viele URLs auf einmal.
+  const zuViele = await api(
+    '/api/run',
+    postJson({ urls: Array.from({ length: 2100 }, (_, i) => `https://a${i}.example`).join('\n') }),
+  );
+  assert.equal(zuViele.status, 400);
+  assert.match(zuViele.payload.error, /zu viele/);
+
+  // Dauerverbindungen sind gedeckelt. Bewusst über node:http: offene
+  // SSE-Antworten würden den Verbindungspool von fetch blockieren.
+  const offen = [];
+  const codes = [];
+  try {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      codes.push(await openEventStream(Number(new URL(base).port), offen));
+    }
+    assert.ok(codes.includes(503), 'die Verbindungsgrenze greift nicht');
+    const angenommen = codes.filter((code) => code === 200).length;
+    assert.ok(angenommen <= 12, `zu viele Ströme offen: ${angenommen}`);
+    assert.equal((await api('/api/state')).status, 200, 'der Server muss ansprechbar bleiben');
+  } finally {
+    offen.forEach((request) => request.destroy());
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+});
+
+test('unbrauchbare Prozentkodierung ergibt 400, keinen Serverfehler', async () => {
+  for (const pfad of ['/report/%zz', '/report/a/%e0%a4%a', '/report/%']) {
+    const antwort = await fetch(`${base}${pfad}`);
+    assert.equal(antwort.status, 400, `${pfad} sollte 400 liefern`);
+  }
+});
+
+test('jede Antwort trägt die Sicherheits-Kopfzeilen', async () => {
+  for (const pfad of ['/', '/api/state', '/assets/ui.css']) {
+    const antwort = await fetch(`${base}${pfad}`);
+    assert.equal(antwort.headers.get('x-content-type-options'), 'nosniff', pfad);
+    assert.equal(antwort.headers.get('x-frame-options'), 'DENY', pfad);
+    // Ohne frame-ancestors könnte eine fremde Seite die Oberfläche einrahmen
+    // und den Nutzer zum Klick auf den Startknopf verleiten.
+    assert.match(antwort.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/, pfad);
+  }
+});
+
+test('die Oberfläche lässt sich nicht in einen fremden Rahmen legen', async () => {
+  const rahmenPort = await freePort();
+  const rahmen = http.createServer((request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(`<!doctype html><meta charset="utf-8"><iframe id="r" src="${base}/" width="800" height="600"></iframe>`);
+  });
+  await new Promise((resolve) => rahmen.listen(rahmenPort, '127.0.0.1', resolve));
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await page.goto(`http://127.0.0.1:${rahmenPort}/`, { waitUntil: 'load' });
+    await page.waitForTimeout(700);
+
+    const inhalt = await page.evaluate(() => {
+      const frame = document.getElementById('r');
+      try {
+        return frame.contentDocument ? frame.contentDocument.body.innerHTML.length : -1;
+      } catch (error) {
+        return -2; // vom Browser blockiert
+      }
+    });
+    assert.ok(inhalt <= 0, `der Rahmen hat die Oberfläche geladen (${inhalt} Zeichen)`);
+  } finally {
+    await context.close();
+    await new Promise((resolve) => rahmen.close(resolve));
+  }
 });

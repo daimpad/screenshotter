@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
+  <!-- Der Server setzt hier beim Ausliefern ein frisches Sitzungsmerkmal ein.
+       Ohne das nimmt er keine verändernden Anfragen an (Schutz gegen CSRF). -->
+  <meta name="screenshotter-token" content="__TOKEN__">
   <title>screenshotter</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233b5bdb'/%3E%3Crect x='6' y='9' width='20' height='15' rx='2.5' fill='%23fff'/%3E%3Ccircle cx='16' cy='16.5' r='4' fill='%233b5bdb'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/assets/report.css">

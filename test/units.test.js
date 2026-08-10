@@ -1,6 +1,7 @@
 /** Unit-Tests ohne Browser: node --test test/units.test.js */
 
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { test } from 'node:test';
 
 import { fileNameFor, runPool } from '../lib/capture.js';
@@ -308,4 +309,63 @@ test('das Install-Kommando für Chromium zeigt auf eine vorhandene Datei', async
 
 test('--open zusammen mit --no-report wird abgelehnt', () => {
   assert.throws(() => parseCliArgs(['--open', '--no-report']), /schließen sich aus/);
+});
+
+/* ------------------------------------------------------- Absicherung (rein) */
+
+test('checkWriteRequest lässt nur Anfragen der eigenen Oberfläche durch', async () => {
+  const { checkWriteRequest } = await import('../lib/server.js');
+  const token = 'geheim';
+  const host = '127.0.0.1:8080';
+  const gut = { 'content-type': 'application/json', 'x-screenshotter-token': token };
+
+  // Lesen ist immer erlaubt.
+  assert.equal(checkWriteRequest({ method: 'GET', headers: {}, token, host }).ok, true);
+
+  assert.equal(checkWriteRequest({ method: 'POST', headers: gut, token, host }).ok, true);
+  assert.equal(
+    checkWriteRequest({ method: 'POST', headers: { ...gut, 'content-type': 'application/json; charset=utf-8' }, token, host }).ok,
+    true,
+    'ein angehängtes charset darf nicht stören',
+  );
+
+  // Ein Formular kommt ohne Preflight nur mit diesen Typen durch — alle abgelehnt.
+  for (const typ of ['text/plain', 'application/x-www-form-urlencoded', 'multipart/form-data', '']) {
+    const ergebnis = checkWriteRequest({ method: 'POST', headers: { ...gut, 'content-type': typ }, token, host });
+    assert.equal(ergebnis.ok, false, `${typ || '(leer)'} müsste abgelehnt werden`);
+  }
+
+  assert.equal(checkWriteRequest({ method: 'POST', headers: { 'content-type': 'application/json' }, token, host }).ok, false);
+  assert.equal(checkWriteRequest({ method: 'POST', headers: { ...gut, 'x-screenshotter-token': 'falsch' }, token, host }).ok, false);
+  assert.equal(checkWriteRequest({ method: 'POST', headers: { ...gut, origin: 'http://boese.example' }, token, host }).ok, false);
+  assert.equal(checkWriteRequest({ method: 'POST', headers: { ...gut, 'sec-fetch-site': 'cross-site' }, token, host }).ok, false);
+
+  // Die eigene Herkunft ist in Ordnung.
+  assert.equal(checkWriteRequest({ method: 'POST', headers: { ...gut, origin: `http://${host}` }, token, host }).ok, true);
+  assert.equal(checkWriteRequest({ method: 'POST', headers: { ...gut, 'sec-fetch-site': 'same-origin' }, token, host }).ok, true);
+});
+
+test('resolveWithin verkraftet kaputte Kodierung und Null-Bytes', async () => {
+  const { resolveWithin } = await import('../lib/server.js');
+
+  // Darf nicht werfen — sonst antwortet der Server mit 500 statt 400.
+  assert.equal(resolveWithin('/var/report', '/%zz'), null);
+  assert.equal(resolveWithin('/var/report', '/%'), null);
+  assert.equal(resolveWithin('/var/report', '/a%00b'), null);
+  assert.equal(resolveWithin('/var/report', '/gut.html'), path.resolve('/var/report/gut.html'));
+});
+
+test('ensureOutputDir übersetzt Dateisystemfehler in Klartext', async () => {
+  const { ensureOutputDir } = await import('../screenshotter.js');
+  const { mkdtemp, writeFile } = await import('node:fs/promises');
+  const os = await import('node:os');
+
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'screenshotter-out-'));
+  const datei = path.join(dir, 'eine-datei');
+  await writeFile(datei, 'x');
+
+  await assert.rejects(() => ensureOutputDir(datei), /ist eine Datei, kein Ordner/);
+  await assert.rejects(() => ensureOutputDir(path.join(datei, 'darunter')), /ist eine Datei, kein Ordner/);
+  // Ein gültiger Ordner geht durch.
+  await ensureOutputDir(path.join(dir, 'neu', 'tiefer'));
 });

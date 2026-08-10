@@ -53,7 +53,7 @@ const PAGES = {
     </body></html>`,
 
   '/quotes': `<!doctype html><html lang="de"><head><meta charset="utf-8">
-    <title>Titel mit &lt;Script&gt; &amp; "Anführungszeichen"</title>
+    <title>&quot;&gt;&lt;img src=x onerror=alert(1)&gt; &amp; &#39;Anführungszeichen&#39;</title>
     <style>${STYLE}</style></head><body><section><h1>XSS-Test</h1></section></body></html>`,
 };
 
