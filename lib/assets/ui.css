@@ -112,16 +112,25 @@ select:focus-visible {
   margin-top: 1.25rem;
 }
 
+/* Wie die Links im Report: Text in Tintenfarbe, Signalgrün erst in der
+   Unterstreichung beim Zeigen. Grüner Text auf Weiß ist kaum zu lesen. */
 .linkish {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent);
+  color: inherit;
   font: inherit;
   font-size: inherit;
   cursor: pointer;
   text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--text-faint);
   text-underline-offset: 2px;
+}
+
+.linkish:hover,
+.linkish:focus-visible {
+  text-decoration-color: var(--accent);
 }
 
 .linkish + .linkish {
@@ -267,7 +276,7 @@ select:focus-visible {
 .meter {
   height: 8px;
   margin-top: 0.9rem;
-  border-radius: 99px;
+  border-radius: var(--radius);
   background: var(--bg-subtle);
   overflow: hidden;
 }
@@ -275,7 +284,7 @@ select:focus-visible {
 .meter__fill {
   height: 100%;
   width: 0;
-  border-radius: 99px;
+  border-radius: var(--radius);
   background: var(--accent);
   transition: width 0.25s ease;
 }

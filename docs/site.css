@@ -45,24 +45,59 @@ img { max-width: 100%; height: auto; display: block; }
   padding: var(--nz-space-9) 0 var(--nz-space-8);
 }
 
-.hero__logo {
-  width: clamp(84px, 9vw, 120px);
-  height: auto;
+.hero__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--nz-space-4);
   margin-bottom: var(--nz-space-5);
 }
 
-/* Das Schmuckbild steht unter dem Titelblock, nicht daneben.
-   Nebeneinander müsste die Überschrift in eine halbe Spalte passen — bei
-   „screenshotter" in Zilla Slab Bold heißt das entweder Überlauf ins Bild
-   oder eine Schriftgröße, die dem Erscheinungsbild seinen stärksten Auftritt
-   nimmt (Regel 8: Überschriften dürfen groß auftreten). */
-.hero__bild {
-  display: block;
-  width: 100%;
-  max-width: 960px;
+.hero__logo {
+  width: clamp(84px, 9vw, 120px);
   height: auto;
-  margin-top: var(--nz-space-7);
 }
+
+/* Hausregel 19: Quadrat, weiße Fläche, durchgezogene Linie, harter Schatten.
+   Kein Wort, und das Zeichen zeigt das Ziel des nächsten Klicks. */
+.theme-toggle {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: var(--nz-stroke-rule) solid var(--nz-line);
+  border-radius: var(--nz-radius);
+  background: var(--nz-surface);
+  color: var(--nz-text);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 0 var(--nz-shadow-color);
+  transition:
+    transform var(--nz-dur-fast) var(--nz-ease),
+    box-shadow var(--nz-dur-fast) var(--nz-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .theme-toggle:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--nz-shadow-md);
+  }
+}
+
+.theme-toggle:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 0 var(--nz-shadow-color);
+}
+
+.theme-toggle:focus-visible {
+  outline: var(--nz-stroke-strong) solid var(--nz-focus);
+  outline-offset: 2px;
+}
+
 
 .hero h1 {
   font-family: var(--nz-font-display);

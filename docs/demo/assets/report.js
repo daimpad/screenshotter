@@ -31,7 +31,16 @@
     var button = document.getElementById('theme-toggle');
     if (!button) return;
 
-    var label = button.querySelector('[data-theme-label]');
+    var label = button.querySelector('[data-theme-mark]');
+
+    /* Reihenfolge des Rundlaufs — steht hier einmal, damit apply() und der
+       Klick dieselbe Quelle benutzen. */
+    var ORDER = ['system', 'light', 'dark'];
+    var NAMES = { system: 'System', light: 'Hell', dark: 'Dunkel' };
+    /* Das Zeichen zeigt das ZIEL des nächsten Klicks, nicht den Zustand:
+       Sonne führt ins Helle, Mond ins Dunkle, Halbkreis zurück zum System.
+       So macht es das Erscheinungsbild an allen Bedienelementen. */
+    var MARKS = { system: '◐', light: '☀', dark: '☾' };
 
     function apply(theme) {
       if (theme === 'light' || theme === 'dark') {
@@ -39,18 +48,19 @@
       } else {
         document.documentElement.removeAttribute('data-theme');
       }
-      if (label) {
-        label.textContent = theme === 'dark' ? 'Dunkel' : theme === 'light' ? 'Hell' : 'System';
-      }
-      button.setAttribute('aria-label', 'Farbschema umschalten (aktuell: ' + (label ? label.textContent : theme) + ')');
+      var next = ORDER[(ORDER.indexOf(theme) + 1) % ORDER.length];
+      if (label) label.textContent = MARKS[next];
+      button.setAttribute(
+        'aria-label',
+        'Farbschema umschalten — aktuell ' + NAMES[theme] + ', weiter zu ' + NAMES[next],
+      );
     }
 
     apply(readStored(THEME_KEY) || 'system');
 
     button.addEventListener('click', function () {
-      var order = ['system', 'light', 'dark'];
       var current = document.documentElement.getAttribute('data-theme') || 'system';
-      var next = order[(order.indexOf(current) + 1) % order.length];
+      var next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
       apply(next);
       writeStored(THEME_KEY, next === 'system' ? null : next);
     });

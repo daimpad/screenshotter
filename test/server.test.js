@@ -154,6 +154,13 @@ test('nur freigegebene Dateien werden aus assets ausgeliefert', async () => {
   assert.equal((await fetch(`${base}/assets/report.js`)).status, 200);
   // Das Logo steht in der Kopfzeile der Oberfläche und muss durchkommen.
   assert.equal((await fetch(`${base}/assets/logo.svg`)).status, 200);
+  // Die Markenschnitte holt report.css nach — ohne sie fällt die Oberfläche
+  // auf Systemschriften zurück.
+  const schrift = await fetch(`${base}/assets/fonts/ZillaSlab-Bold.woff2`);
+  assert.equal(schrift.status, 200);
+  assert.equal(schrift.headers.get('content-type'), 'font/woff2');
+  // Der Schrägstrich im Namen darf keinen Weg nach oben öffnen.
+  assert.equal((await fetch(`${base}/assets/fonts/../../server.js`)).status, 404);
   assert.equal((await fetch(`${base}/assets/ui.html`)).status, 404);
   assert.equal((await fetch(`${base}/assets/../server.js`)).status, 404);
 });
