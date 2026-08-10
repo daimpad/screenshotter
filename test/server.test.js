@@ -152,6 +152,8 @@ test('die Oberfläche wird ausgeliefert und meldet Version und Vorbelegung', asy
 test('nur freigegebene Dateien werden aus assets ausgeliefert', async () => {
   assert.equal((await fetch(`${base}/assets/ui.css`)).status, 200);
   assert.equal((await fetch(`${base}/assets/report.js`)).status, 200);
+  // Das Logo steht in der Kopfzeile der Oberfläche und muss durchkommen.
+  assert.equal((await fetch(`${base}/assets/logo.svg`)).status, 200);
   assert.equal((await fetch(`${base}/assets/ui.html`)).status, 404);
   assert.equal((await fetch(`${base}/assets/../server.js`)).status, 404);
 });

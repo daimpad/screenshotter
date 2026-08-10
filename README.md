@@ -1,6 +1,8 @@
 <div align="center">
 
-# 📸 screenshotter
+<img src="docs/logo.svg" alt="" width="132">
+
+# screenshotter
 
 **Full-Page-Screenshots für eine Liste von URLs — plus fertigem HTML-Report.**
 

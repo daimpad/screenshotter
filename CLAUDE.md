@@ -229,6 +229,12 @@ ausführen. Genau so wurde `release.yml` verifiziert.
 **Keine rohen ESC-Bytes im Quelltext.** ANSI-Sequenzen als `\u001b` schreiben,
 nicht als literales Steuerzeichen.
 
+**Eine neue Datei in `lib/assets/` reicht nicht.** Sie muss an zwei weiteren
+Stellen nachgezogen werden, sonst fehlt sie zur Hälfte: in `PUBLIC_ASSETS`
+(`lib/server.js`), sonst antwortet die Weboberfläche mit 404, und in der
+Kopierliste von `writeReport()` (`lib/report.js`), sonst fehlt sie im erzeugten
+Report. Beides hat jetzt einen Test — `logo.svg` ist der Fall, an dem es auffiel.
+
 **Bildmaße im Test erst messen, wenn das Bild geladen ist.** Die eingepasste
 Größe in der Lightbox entsteht rein über CSS (`max-width`/`max-height`); vorher
 liefert `boundingBox()` die Breite 0. Lokal liegt das PNG im Cache und lädt

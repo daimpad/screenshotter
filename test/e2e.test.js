@@ -102,7 +102,9 @@ test('CLI endet mit Exit-Code 1, weil URLs fehlschlagen', () => {
 });
 
 test('alle erwarteten Dateien werden erzeugt', async () => {
-  for (const relative of ['index.html', 'report.json', 'assets/report.css', 'assets/report.js']) {
+  // logo.svg gehört dazu: Favicon und Fußzeile des Reports verweisen darauf.
+  // Wird es beim Kopieren vergessen, bleibt der Fehler still.
+  for (const relative of ['index.html', 'report.json', 'assets/report.css', 'assets/report.js', 'assets/logo.svg']) {
     assert.ok(existsSync(path.join(outDir, relative)), `fehlt: ${relative}`);
   }
 

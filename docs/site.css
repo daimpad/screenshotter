@@ -45,11 +45,23 @@ img { max-width: 100%; height: auto; display: block; }
   padding: var(--nz-space-9) 0 var(--nz-space-8);
 }
 
-.hero__mark {
-  /* Das Zeichen der Seite: schwarze Fläche, eine grüne Stelle (Regel 18). */
-  width: 56px;
-  height: 56px;
+.hero__logo {
+  width: clamp(84px, 9vw, 120px);
+  height: auto;
   margin-bottom: var(--nz-space-5);
+}
+
+/* Das Schmuckbild steht unter dem Titelblock, nicht daneben.
+   Nebeneinander müsste die Überschrift in eine halbe Spalte passen — bei
+   „screenshotter" in Zilla Slab Bold heißt das entweder Überlauf ins Bild
+   oder eine Schriftgröße, die dem Erscheinungsbild seinen stärksten Auftritt
+   nimmt (Regel 8: Überschriften dürfen groß auftreten). */
+.hero__bild {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  height: auto;
+  margin-top: var(--nz-space-7);
 }
 
 .hero h1 {
