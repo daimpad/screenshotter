@@ -20,7 +20,16 @@
 <header class="hero">
   <div class="wrap">
     <div class="hero__text">
-      <img class="hero__logo" src="logo.svg" alt="screenshotter" width="120" height="107">
+      <div class="hero__top">
+        <img class="hero__logo" src="logo.svg" alt="screenshotter" width="120" height="107">
+
+        <!-- Hausregel 19: Quadrat in der Höhe der Leiste, weiße Fläche,
+             durchgezogene Linie, harter Schatten. Zeigt das Ziel, nicht den
+             Zustand, und trägt kein Wort. -->
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Farbschema umschalten">
+          <span aria-hidden="true" data-theme-mark>◐</span>
+        </button>
+      </div>
 
       <h1>screenshotter</h1>
 
@@ -39,11 +48,6 @@
         Läuft lokal auf deinem Rechner · Windows, macOS, Linux · MIT-Lizenz
       </p>
     </div>
-
-    <!-- Schmuckbild: der Stapel aufgenommener Seiten, vorn die scharf
-         gestellte. Rein dekorativ, deshalb ohne Alternativtext — die Aussage
-         steht schon in der Subline darüber. -->
-    <img class="hero__bild" src="fensterstapel.png" alt="" width="1408" height="768">
   </div>
 </header>
 
@@ -211,6 +215,8 @@ node screenshotter.js --serve --open</code></pre>
     </p>
   </div>
 </footer>
+
+<script src="theme.js" defer></script>
 
 </body>
 </html>

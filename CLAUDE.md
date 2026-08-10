@@ -97,7 +97,7 @@ JPG-Screenshots und unter `demo/` ein echter, eingecheckter Report.
   Beispielseiten: `build-shots.mjs` importiert `startDemoSite()` aus
   `build-demo.mjs`, damit Report und Bilder dieselbe Welt zeigen.
 
-### Die Vorschauseite trägt das nozilla-CI
+### Alle drei Oberflächen tragen das nozilla-CI
 
 `docs/index.html` und `docs/site.css` folgen dem Erscheinungsbild aus
 [daimpad/nozilla-ci](https://github.com/daimpad/nozilla-ci). Die Grundlage liegt
@@ -118,9 +118,27 @@ Die vier Regeln, an denen sich das Layout entscheidet (vollständig in
    ersten die Wirkung.
 
 Dazu: Radius immer 0, Schatten nur hart versetzt (nie weichgezeichnet), keine
-Verläufe, **keine Emoji**. Der Report unter `docs/demo/` bleibt bewusst im
-eigenen Design des Werkzeugs — er zeigt, was `screenshotter` erzeugt, nicht wie
-die Vorschauseite aussieht.
+Verläufe, keine Filter, **keine Emoji**.
+
+**Report und Weboberfläche tragen dasselbe Erscheinungsbild**, und zwar über
+denselben Tokenblock: `lib/assets/report.css` bringt die Farben mit,
+`lib/assets/ui.css` verbraucht sie. Wer dort eine Farbe ändert, ändert beide
+Oberflächen. Zwei Punkte, die dabei leicht untergehen:
+
+* **Nur zwei Markenschnitte** liegen in `lib/assets/fonts/` — Zilla Slab Bold
+  für Überschriften, Space Mono Bold für Labels. Der Fließtext bleibt
+  Systemschrift. Alle drei Schnitte wären 335 KB in *jedem* erzeugten Report
+  gewesen, so sind es 75.
+* **Links laufen in Tintenfarbe**, nicht in Signalgrün. Grün ist die
+  Aktionsfarbe, steht aber nur in der Unterstreichung beim Zeigen — grüner Text
+  auf Weiß ist praktisch nicht zu lesen.
+
+Der Umschalter für das Farbschema folgt Hausregel 19: Quadrat, weiße Fläche,
+durchgezogene Linie, harter Schatten, **kein Wort**, und das Zeichen zeigt das
+*Ziel* des nächsten Klicks (`☀` → hell, `☾` → dunkel, `◐` → System). Er steht an
+drei Stellen mit drei eigenen Implementierungen — `docs/theme.js`,
+`lib/assets/report.js` und `lib/assets/ui.js`. Wer die Reihenfolge ändert, muss
+alle drei anfassen.
 
 **`display: grid` auf einem Listenpunkt macht jedes Kind zur Zelle** — auch
 nackte Textknoten. Die Schrittliste unter „In 60 Sekunden" brach dadurch nach

@@ -1,76 +1,108 @@
-/* screenshotter — Report-Stylesheet (Vanilla CSS, keine Abhängigkeiten) */
+/* screenshotter — Report-Stylesheet (Vanilla CSS, keine Abhängigkeiten)
+ *
+ * Trägt das Erscheinungsbild von nozilla (daimpad/nozilla-ci): Papierton als
+ * Grund, weiße Flächen für Inhalte, Tinte für Linien und Text, Signalgrün
+ * ausschließlich für Aktionen. Radius immer 0, Schatten hart versetzt.
+ *
+ * ui.css baut auf diesen Tokens auf — wer hier eine Farbe ändert, ändert die
+ * Weboberfläche mit.
+ *
+ * Zwei Markenschnitte werden mitgeliefert, nicht alle drei: Überschriften und
+ * Labels tragen das CI erkennbar, der Fließtext läuft in der Systemschrift.
+ * Alle drei wären 335 KB in jedem erzeugten Report gewesen, so sind es 75.
+ */
+
+@font-face {
+  font-family: "Zilla Slab";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("fonts/ZillaSlab-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Space Mono";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("fonts/SpaceMono-Bold.woff2") format("woff2");
+}
 
 :root {
   color-scheme: light dark;
 
-  --bg: #f4f6fb;
+  --bg: #FFFEE5;
   --bg-elevated: #ffffff;
-  --bg-subtle: #eef1f8;
-  --border: #dfe3ee;
-  --border-strong: #c6ccdf;
-  --text: #16192b;
-  --text-muted: #5c6379;
-  --text-faint: #858ca1;
-  --accent: #3b5bdb;
-  --accent-soft: #e7ecfd;
-  --on-accent: #ffffff;
-  --ok: #157f4a;
-  --ok-soft: #dff5e8;
-  --warn: #9a6206;
-  --warn-soft: #fdf0d6;
-  --error: #b3261e;
-  --error-soft: #fde3e1;
-  --shadow: 0 1px 2px rgba(16, 22, 43, 0.06), 0 8px 24px rgba(16, 22, 43, 0.06);
-  --radius: 12px;
-  --radius-sm: 8px;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --bg-subtle: #FFFEE5;
+  --border: #000000;
+  --border-strong: #000000;
+  --text: #000000;
+  --text-muted: rgba(0, 0, 0, 0.66);
+  --text-faint: rgba(0, 0, 0, 0.42);
+  --accent: #00FF9C;
+  --accent-soft: #B7FFE0;
+  --on-accent: #000000;
+  --ok: #0a7a4a;
+  --ok-soft: #B7FFE0;
+  --warn: #FF5F1F;
+  --warn-soft: #FFE3D4;
+  --error: #E5484D;
+  --error-soft: #FFDDDE;
+
+  /* Harte, versetzte Schatten — nie weichgezeichnet. Das ist die Formsprache,
+     nicht Geschmack: ein weicher Schatten macht aus dem Erscheinungsbild ein
+     beliebiges. */
+  --shadow: 4px 4px 0 0 var(--border);
+  --radius: 0;
+  --radius-sm: 0;
+  --stroke: 2px;
+
+  --mono: "Space Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --display: "Zilla Slab", Georgia, "Times New Roman", serif;
   /* Höhe der klebenden Werkzeugleiste; JS misst nach und korrigiert. */
   --toolbar-height: 3.4rem;
 }
 
+/* Dunkel: warm, nicht kalt. Das Papier wird zur Schrift, die Tinte zum Raum —
+   und damit auch die Schattenfarbe, sonst verschwindet der Schatten im Grund. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #10131c;
-    --bg-elevated: #171b27;
-    --bg-subtle: #1d2231;
-    --border: #262c3c;
-    --border-strong: #38405a;
-    --text: #e8ebf5;
-    --text-muted: #a3abc2;
-    --text-faint: #7d8599;
-    --accent: #7f9cff;
-    --accent-soft: #202944;
-    --on-accent: #10131c;
-    --ok: #6ee7a8;
-    --ok-soft: #14311f;
-    --warn: #f0c368;
-    --warn-soft: #33290f;
-    --error: #ff9b93;
-    --error-soft: #3a1a17;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
+    --bg: #0C0C0A;
+    --bg-elevated: #17160F;
+    --bg-subtle: #201F16;
+    --border: #FFFEE5;
+    --border-strong: #FFFEE5;
+    --text: #FFFEE5;
+    --text-muted: rgba(255, 254, 229, 0.64);
+    --text-faint: rgba(255, 254, 229, 0.40);
+    --accent: #00FF9C;
+    --accent-soft: rgba(0, 255, 156, 0.16);
+    --on-accent: #000000;
+    --ok: #00FF9C;
+    --ok-soft: rgba(0, 255, 156, 0.16);
+    --warn: #FF5F1F;
+    --warn-soft: rgba(255, 95, 31, 0.16);
+    --error: #E5484D;
+    --error-soft: rgba(229, 72, 77, 0.18);
+    --shadow: 4px 4px 0 0 var(--border);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #10131c;
-  --bg-elevated: #171b27;
-  --bg-subtle: #1d2231;
-  --border: #262c3c;
-  --border-strong: #38405a;
-  --text: #e8ebf5;
-  --text-muted: #a3abc2;
-  --text-faint: #7d8599;
-  --accent: #7f9cff;
-  --accent-soft: #202944;
-  --on-accent: #10131c;
-  --ok: #6ee7a8;
-  --ok-soft: #14311f;
-  --warn: #f0c368;
-  --warn-soft: #33290f;
-  --error: #ff9b93;
-  --error-soft: #3a1a17;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
+  --bg: #0C0C0A;
+  --bg-elevated: #17160F;
+  --bg-subtle: #201F16;
+  --border: #FFFEE5;
+  --border-strong: #FFFEE5;
+  --text: #FFFEE5;
+  --text-muted: rgba(255, 254, 229, 0.64);
+  --text-faint: rgba(255, 254, 229, 0.40);
+  --accent: #00FF9C;
+  --accent-soft: rgba(0, 255, 156, 0.16);
+  --on-accent: #000000;
+  --ok: #00FF9C;
+  --ok-soft: rgba(0, 255, 156, 0.16);
+  --warn: #FF5F1F;
+  --warn-soft: rgba(255, 95, 31, 0.16);
+  --error: #E5484D;
+  --error-soft: rgba(229, 72, 77, 0.18);
+  --shadow: 4px 4px 0 0 var(--border);
 }
 
 *,
@@ -99,14 +131,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Links laufen in der Textfarbe, nicht in Signalgrün. Grün auf Weiß ist kaum
+   zu lesen — und das Erscheinungsbild setzt die Aktionsfarbe ohnehin auf die
+   Unterstreichung im Hover, nicht auf den Text selbst. */
 a {
-  color: var(--accent);
-  text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
   text-underline-offset: 2px;
+  text-decoration-color: var(--text-faint);
 }
 
-a:hover {
-  text-decoration-color: currentColor;
+a:hover,
+a:focus-visible {
+  text-decoration-color: var(--accent);
 }
 
 .wrap {
@@ -118,7 +156,7 @@ a:hover {
 
 .site-header {
   background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--stroke) solid var(--border);
   padding: 2rem 0 1.75rem;
 }
 
@@ -132,8 +170,10 @@ a:hover {
 
 .site-title {
   margin: 0;
-  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.1rem);
-  font-weight: 650;
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 1.1rem + 1.7vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.05;
   letter-spacing: -0.02em;
 }
 
@@ -161,24 +201,49 @@ a:hover {
   font-size: 0.925rem;
 }
 
+/* Der Umschalter ist ein Quadrat mit weißer Fläche, durchgezogener Linie und
+   hartem Schatten — dieselbe Bauform wie jedes Bedienelement der Kopfleiste.
+   Er zeigt das Ziel, nicht den Zustand, und trägt kein Wort.
+   (Hausregel 19 des CI.)
+
+   Abweichung mit Absicht: das CI kennt zwei Zustände, hier sind es drei, weil
+   „System" — dem Betriebssystem folgen — eine Einstellung ist, die man einem
+   Report nicht wegnehmen sollte. Das Zeichen bleibt trotzdem das Ziel des
+   nächsten Klicks. */
 .theme-toggle {
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.5rem 0.85rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--bg-subtle);
-  color: var(--text-muted);
+  display: inline-grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: var(--stroke) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 1.05rem;
+  line-height: 1;
   cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 90ms cubic-bezier(.2, 0, 0, 1), box-shadow 90ms cubic-bezier(.2, 0, 0, 1);
 }
 
-.theme-toggle:hover {
-  color: var(--text);
-  border-color: var(--accent);
+@media (prefers-reduced-motion: no-preference) {
+  .theme-toggle:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 0 var(--border);
+  }
+}
+
+.theme-toggle:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 0 var(--border);
+}
+
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .stats {
@@ -192,26 +257,32 @@ a:hover {
 
 .stat {
   background: var(--bg-subtle);
-  border: 1px solid var(--border);
+  border: var(--stroke) solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.75rem 0.9rem;
 }
 
 .stat__value {
   display: block;
-  font-size: 1.45rem;
-  font-weight: 650;
+  font-family: var(--display);
+  font-size: 1.75rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
+/* Labels laufen in Space Mono, versalgesetzt, mit 0.12em Sperrung — das ist
+   die dritte Stimme des Erscheinungsbilds neben Überschrift und Fließtext. */
 .stat__label {
   display: block;
-  margin-top: 0.1rem;
+  margin-top: 0.2rem;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
 }
 
 .stat--ok .stat__value {
@@ -247,8 +318,9 @@ main {
 
 .section__title {
   margin: 0;
-  font-size: 1.15rem;
-  font-weight: 640;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
@@ -278,7 +350,7 @@ main {
   flex: 1 1 260px;
   min-width: 200px;
   padding: 0.55rem 0.8rem;
-  border: 1px solid var(--border-strong);
+  border: var(--stroke) solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-elevated);
   color: var(--text);
@@ -298,8 +370,8 @@ main {
 
 .chip {
   padding: 0.45rem 0.8rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  border: var(--stroke) solid var(--border);
+  border-radius: var(--radius);
   background: var(--bg-elevated);
   color: var(--text-muted);
   font: inherit;
@@ -333,7 +405,7 @@ main {
    entstehen deshalb über die Eckzellen, nicht über overflow: hidden. */
 .table-card {
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  border: var(--stroke) solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
@@ -350,7 +422,7 @@ thead th {
   top: var(--toolbar-height);
   z-index: 2;
   background: var(--bg-subtle);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--stroke) solid var(--border);
   padding: 0.7rem 0.85rem;
   text-align: left;
   font-size: 0.76rem;
@@ -409,7 +481,7 @@ th.sortable[aria-sort="descending"]::after {
 
 tbody td {
   padding: 0.75rem 0.85rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--stroke) solid var(--border);
   vertical-align: middle;
 }
 
@@ -442,7 +514,7 @@ tbody tr:hover {
   display: block;
   width: 200px;
   aspect-ratio: 4 / 3;
-  border: 1px solid var(--border-strong);
+  border: var(--stroke) solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--bg-subtle);
@@ -471,7 +543,7 @@ tbody tr:hover {
   aspect-ratio: 4 / 3;
   align-items: center;
   justify-content: center;
-  border: 1px dashed var(--border-strong);
+  border: var(--stroke) dashed var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-subtle);
   color: var(--text-faint);
@@ -506,7 +578,7 @@ tbody tr:hover {
   display: inline-block;
   margin-top: 0.3rem;
   padding: 0.1rem 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 0.72rem;
@@ -535,9 +607,9 @@ tbody tr:hover {
 
 kbd {
   padding: 0.05rem 0.35rem;
-  border: 1px solid var(--border-strong);
+  border: var(--stroke) solid var(--border);
   border-bottom-width: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--bg-subtle);
   font-family: var(--mono);
   font-size: 0.78em;
@@ -555,7 +627,7 @@ kbd {
 .badge {
   display: inline-block;
   padding: 0.18rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius);
   font-size: 0.78rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -607,8 +679,9 @@ kbd {
   z-index: 50;
   display: flex;
   flex-direction: column;
-  background: rgba(8, 10, 18, 0.92);
-  backdrop-filter: blur(2px);
+  /* Kein backdrop-filter: das Erscheinungsbild kennt keine Filter und kein
+     Glas. Deckende Tinte statt weichgezeichnetem Hintergrund. */
+  background: rgba(12, 12, 10, 0.94);
 }
 
 .lightbox__bar {
@@ -694,7 +767,7 @@ kbd {
   max-height: calc(100vh - 6rem);
   width: auto;
   background: #fff;
-  border-radius: 6px;
+  border-radius: var(--radius);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   cursor: zoom-in;
 }
@@ -709,7 +782,7 @@ kbd {
 /* ---------- Fußzeile ---------- */
 
 .site-footer {
-  border-top: 1px solid var(--border);
+  border-top: var(--stroke) solid var(--border);
   padding: 1.5rem 0 2.5rem;
   color: var(--text-faint);
   font-size: 0.85rem;
@@ -748,7 +821,7 @@ kbd {
       "page    page"
       "status  file";
     align-content: start;
-    border: 1px solid var(--border);
+    border: var(--stroke) solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--bg-elevated);
     overflow: hidden;
@@ -789,7 +862,7 @@ kbd {
     width: 100%;
     aspect-ratio: 16 / 10;
     border: 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--stroke) solid var(--border);
     border-radius: 0;
   }
 
@@ -847,7 +920,7 @@ kbd {
     grid-template-columns: 1fr;
     gap: 0.15rem;
     padding: 0.9rem 0.85rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--stroke) solid var(--border);
   }
 
   /* `display: grid` würde das HTML-Attribut [hidden] überstimmen — Filter kaputt. */
