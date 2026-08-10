@@ -1,290 +1,339 @@
-/* Vorschauseite auf GitHub Pages. Eigenständig, aber mit derselben Farbwelt
-   wie der Report — damit sich beides wie ein Produkt anfühlt. */
+/* ============================================================================
+   Vorschauseite — screenshotter im Erscheinungsbild von nozilla
 
-:root {
-  color-scheme: light dark;
+   Die Grundlagen stehen in nozilla/design-system.css (unverändert übernommen
+   aus daimpad/nozilla-ci). Hier steht nur, was diese eine Seite zusätzlich
+   braucht: Blätter, Bänder, Bildpaare, Ablauf.
 
-  --bg: #f4f6fb;
-  --bg-elevated: #ffffff;
-  --bg-subtle: #eef1f8;
-  --border: #dfe3ee;
-  --border-strong: #c6ccdf;
-  --text: #16192b;
-  --text-muted: #5c6379;
-  --text-faint: #858ca1;
-  --accent: #3b5bdb;
-  --accent-soft: #e7ecfd;
-  --on-accent: #ffffff;
-  --ok: #157f4a;
-  --shadow: 0 1px 2px rgba(16, 22, 43, 0.06), 0 10px 30px rgba(16, 22, 43, 0.07);
-  --radius: 14px;
-  --radius-sm: 9px;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
+   Maßgeblich sind die Hausregeln des CI. Die vier, an denen sich hier alles
+   entscheidet — die Nummern verweisen auf HAUSREGELN.md im CI-Repository:
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #10131c;
-    --bg-elevated: #171b27;
-    --bg-subtle: #1d2231;
-    --border: #262c3c;
-    --border-strong: #38405a;
-    --text: #e8ebf5;
-    --text-muted: #a3abc2;
-    --text-faint: #7d8599;
-    --accent: #7f9cff;
-    --accent-soft: #202944;
-    --on-accent: #10131c;
-    --ok: #6ee7a8;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 34px rgba(0, 0, 0, 0.4);
-  }
-}
+     1 · Fließtext steht auf Weiß, nie direkt auf dem Papierton.
+     2 · Auf dem Papierton stehen nur Überschriften, Labels, Navigation.
+     3 · Signalgrün ist ausschließlich Aktionsfarbe.
+     6 · Vollflächige Bänder sind weiß; Schwarz genau einmal je Seite.
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+   Deshalb ist der Seitengrund gelb, die Inhalte liegen auf weißen Blättern,
+   und das schwarze Band gibt es genau einmal — ganz unten beim Automatik-
+   Betrieb. Wer ein zweites einbaut, nimmt dem ersten die Wirkung.
+============================================================================ */
 
-[hidden] {
-  display: none !important;
-}
+/* Ausgeblendetes bleibt ausgeblendet — dieselbe Falle wie in report.css und
+   ui.css: eine display-Regel überstimmt sonst das HTML-Attribut. */
+[hidden] { display: none !important; }
 
 body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 16px;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-
-a {
-  color: var(--accent);
-  text-underline-offset: 2px;
-}
-
-code {
-  font-family: var(--mono);
-  font-size: 0.9em;
+  /* Regel 7: Weiß dominiert, Gelb bleibt der ruhige Grund dahinter. */
+  background: var(--nz-bg);
 }
 
 .wrap {
-  width: min(1120px, 100% - 2.5rem);
+  max-width: var(--nz-container);
   margin-inline: auto;
+  padding-inline: var(--nz-space-6);
 }
 
-/* ------------------------------------------------------------------- Kopf */
+img { max-width: 100%; height: auto; display: block; }
+
+
+/* ── Kopf ─────────────────────────────────────────────────────────────────
+   Regel 2: steht auf dem Papierton, weil hier nur Titel, Subline und
+   Navigation stehen — kein Fließtext.
+   Regel 10: keine Trennlinie darunter. Der Abstand macht die Trennung.       */
 
 .hero {
-  padding: 5rem 0 4rem;
-  text-align: center;
-  background:
-    radial-gradient(70rem 30rem at 50% -8rem, var(--accent-soft), transparent 65%),
-    var(--bg);
-  border-bottom: 1px solid var(--border);
+  padding: var(--nz-space-9) 0 var(--nz-space-8);
 }
 
-.hero__logo {
-  font-size: 3.2rem;
-  line-height: 1;
+.hero__mark {
+  /* Das Zeichen der Seite: schwarze Fläche, eine grüne Stelle (Regel 18). */
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--nz-space-5);
 }
 
 .hero h1 {
-  margin: 0.6rem 0 0;
-  font-size: clamp(2.2rem, 1.4rem + 3vw, 3.4rem);
-  font-weight: 680;
-  letter-spacing: -0.035em;
+  font-family: var(--nz-font-display);
+  font-weight: 700;
+  font-size: clamp(56px, 9vw, 128px);
+  line-height: .92;
+  letter-spacing: -.03em;
+  margin: 0 0 var(--nz-space-5);
 }
 
-.hero__claim {
-  margin: 0.9rem auto 0;
-  max-width: 34rem;
-  color: var(--text-muted);
-  font-size: clamp(1.02rem, 0.95rem + 0.4vw, 1.2rem);
+/* Regel 12: unter dem Seitentitel eine Subline — ein bis drei Sätze in
+   Zilla Slab, groß, auf dem Papierton, mit deutlichem Abstand nach unten. */
+.hero__subline {
+  font-family: var(--nz-font-display);
+  font-weight: 500;
+  font-size: clamp(21px, 2.6vw, 34px);
+  line-height: 1.22;
+  letter-spacing: -.01em;
+  max-width: 30ch;
+  margin: 0 0 var(--nz-space-7);
+  text-wrap: balance;
 }
 
-.actions {
+.hero__actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.8rem;
-  margin-top: 2.2rem;
+  gap: var(--nz-space-3);
+  margin-bottom: var(--nz-space-5);
 }
 
-.button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.4rem;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
-  color: var(--text);
-  font-size: 0.98rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.button:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.button--primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
-}
-
-.button--primary:hover {
-  color: var(--on-accent);
-  filter: brightness(1.08);
-}
+/* Regel 17: die leise Schaltfläche ist weiß mit gestrichelter Linie. */
+.btn--quiet { border-style: dashed; }
 
 .hero__note {
-  margin: 1.4rem 0 0;
-  color: var(--text-faint);
-  font-size: 0.88rem;
-}
-
-/* --------------------------------------------------------------- Abschnitte */
-
-section {
-  padding: 4rem 0;
-}
-
-section + section {
-  border-top: 1px solid var(--border);
-}
-
-h2 {
-  margin: 0 0 0.6rem;
-  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
-  font-weight: 660;
-  letter-spacing: -0.025em;
-}
-
-.lead {
-  margin: 0 0 2rem;
-  max-width: 46rem;
-  color: var(--text-muted);
-}
-
-figure {
+  font-family: var(--nz-font-mono);
+  font-weight: 700;
+  font-size: var(--nz-text-xs);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--nz-text-muted);
   margin: 0;
 }
 
-figure img {
+
+/* ── Abschnitte ───────────────────────────────────────────────────────────
+   Regel 13: die Kategorieüberschrift steht auf dem Papierton, die Bausteine
+   darunter auf Weiß.                                                        */
+
+.section { padding-bottom: var(--nz-space-8); }
+
+.section__head { margin-bottom: var(--nz-space-5); }
+
+.section__label {
+  font-family: var(--nz-font-mono);
+  font-weight: 700;
+  font-size: var(--nz-text-xs);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--nz-text-muted);
   display: block;
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  margin-bottom: var(--nz-space-3);
 }
 
-figcaption {
-  margin-top: 0.7rem;
-  color: var(--text-faint);
-  font-size: 0.86rem;
+.section h2 {
+  font-size: clamp(30px, 4vw, 48px);
+  margin: 0;
 }
+
+/* Regel 1: Fließtext steht auf einer weißen Fläche.
+   Regel 11: kein Rahmen — Weiß auf Gelb hebt sich ohnehin ab. */
+.sheet {
+  background: var(--nz-surface);
+  color: var(--nz-text);
+  padding: var(--nz-space-7);
+}
+
+.sheet > p { max-width: 68ch; }
+
+.sheet__lead {
+  font-size: var(--nz-text-lg);
+  line-height: 1.45;
+  margin-bottom: var(--nz-space-6);
+}
+.sheet__lead:last-child { margin-bottom: 0; }
+
+
+/* ── Bildpaare ────────────────────────────────────────────────────────────
+   Regel 16: es gibt genau zwei Linien. Hier die durchgezogene 2px.
+   Regel 29: nur was ein Ziel ist, meldet sich beim Zeigen. Die beiden
+   Report-Bilder verweisen auf den Demo-Report und dürfen; die Bilder der
+   Weboberfläche verweisen nirgendwohin und bleiben still.                   */
 
 .shots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.6rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--nz-space-6);
+  margin: 0;
 }
 
-.features {
+.shots figure { margin: 0; }
+
+.shots img {
+  border: var(--nz-stroke-rule) solid var(--nz-line);
+  background: var(--nz-surface);
+}
+
+.shots figcaption {
+  font-size: var(--nz-text-sm);
+  color: var(--nz-text-muted);
+  margin-top: var(--nz-space-3);
+}
+
+/* Nur die verlinkten Bilder reagieren — und dann hart, ohne Weichzeichner. */
+.shots a {
+  display: block;
+  text-decoration: none;
+}
+.shots a img { transition: box-shadow var(--nz-dur-fast) var(--nz-ease), transform var(--nz-dur-fast) var(--nz-ease); }
+@media (prefers-reduced-motion: no-preference) {
+  .shots a:hover img {
+    transform: translate(-3px, -3px);
+    box-shadow: var(--nz-shadow-md);
+  }
+}
+.shots a:focus-visible img {
+  outline: var(--nz-stroke-strong) solid var(--nz-focus);
+  outline-offset: 3px;
+}
+
+
+/* ── In 60 Sekunden ──────────────────────────────────────────────────────── */
+
+.howto {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.2rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.feature {
-  padding: 1.4rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
-}
-
-.feature h3 {
-  margin: 0 0 0.3rem;
-  font-size: 1rem;
-  font-weight: 640;
-}
-
-.feature p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.92rem;
-}
-
-pre {
-  margin: 0;
-  padding: 1.2rem 1.4rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
-  overflow-x: auto;
-  font-family: var(--mono);
-  font-size: 0.88rem;
-  line-height: 1.7;
-}
-
-pre .comment {
-  color: var(--text-faint);
-}
-
-.two {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.6rem;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--nz-space-7);
   align-items: start;
 }
 
+.howto pre {
+  margin: 0 0 var(--nz-space-4);
+}
+
+/* Regel 24: die breite Kante links markiert ausschließlich Hinweisfelder.
+   Das hier ist einer — der Windows-Weg. */
+.hint {
+  border-left: var(--nz-stroke-heavy) solid var(--nz-line);
+  padding: var(--nz-space-3) 0 var(--nz-space-3) var(--nz-space-4);
+  font-size: var(--nz-text-sm);
+}
+
+/* Regel 27: eine Zahl in einem Ablauf steht schwarz mit weißer Schrift.
+   Grün hieße „hier kann man klicken" — eine Schrittzahl kann man nicht. */
 .steps {
+  list-style: none;
   margin: 0;
-  padding-left: 1.2rem;
-  color: var(--text-muted);
+  padding: 0;
+  counter-reset: schritt;
 }
 
+/* Die Zahl wird positioniert, nicht als Rasterzelle gesetzt: ein Listenpunkt
+   mit `display: grid` macht jedes Kind zur eigenen Zelle — auch die nackten
+   Textknoten. Der Fließtext landete dadurch in der 32px-Spalte und brach nach
+   jedem Wort um. */
 .steps li {
-  margin-bottom: 0.5rem;
+  counter-increment: schritt;
+  position: relative;
+  padding-left: calc(32px + var(--nz-space-4));
+  min-height: 32px;
+  margin-bottom: var(--nz-space-5);
+}
+.steps li:last-child { margin-bottom: 0; }
+
+.steps li::before {
+  content: counter(schritt);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: var(--nz-line);
+  color: var(--nz-bg);
+  font-family: var(--nz-font-mono);
+  font-weight: 700;
+  font-size: var(--nz-text-sm);
 }
 
-.steps strong {
-  color: var(--text);
+
+/* ── Warum so schlank ────────────────────────────────────────────────────── */
+
+.reasons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--nz-space-7) var(--nz-space-6);
 }
 
-.note {
-  margin-top: 1.4rem;
-  padding: 1rem 1.2rem;
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background: var(--accent-soft);
-  color: var(--text-muted);
-  font-size: 0.9rem;
+.reasons h3 {
+  font-size: var(--nz-text-lg);
+  margin: 0 0 var(--nz-space-2);
 }
 
-.note strong {
-  color: var(--text);
+.reasons p {
+  color: var(--nz-text-muted);
+  margin: 0;
 }
 
-footer {
-  padding: 2.5rem 0 3.5rem;
-  border-top: 1px solid var(--border);
-  color: var(--text-faint);
-  font-size: 0.88rem;
-  text-align: center;
+
+/* ── Das eine schwarze Band ───────────────────────────────────────────────
+   Regel 6: Schwarz ist die Ausnahme für genau eine hervorgehobene Stelle je
+   Seite. Hier ist sie. Im dunklen Modus dreht sich das Verhältnis um — dafür
+   stehen die Tokens, nicht feste Farbwerte.
+   Regel 21: davor ein Abstand, nicht drei.                                   */
+
+.band--ink {
+  background: var(--nz-line);
+  color: var(--nz-bg);
+  padding: var(--nz-space-8) 0;
 }
 
-footer a {
-  white-space: nowrap;
+.band--ink h2 { color: inherit; }
+.band--ink p { color: inherit; opacity: .82; max-width: 62ch; }
+
+.band--ink .section__label { color: inherit; opacity: .7; }
+
+/* Der Codeblock im Band trägt die Linie in der Bandfarbe, nicht in Tinte —
+   sonst verschwindet sie im Grund. */
+.band--ink pre {
+  background: transparent;
+  color: inherit;
+  border-color: currentColor;
+  box-shadow: none;
+  margin: var(--nz-space-5) 0 0;
+}
+
+/* Regel 17: auf dem schwarzen Band ist die leise Schaltfläche cremefarben. */
+.band--ink .nz-btn {
+  background: transparent;
+  color: inherit;
+  border-color: currentColor;
+  box-shadow: 4px 4px 0 0 currentColor;
+}
+
+
+/* ── Fuß ──────────────────────────────────────────────────────────────────
+   Steht wieder auf dem Papierton und trägt nur Navigation (Regel 2).        */
+
+.site-foot {
+  padding: var(--nz-space-7) 0 var(--nz-space-8);
+  font-size: var(--nz-text-sm);
+}
+
+.site-foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nz-space-2) var(--nz-space-5);
+  margin-bottom: var(--nz-space-4);
+  font-family: var(--nz-font-display);
+  font-weight: 500;
+  font-size: var(--nz-text-base);
+}
+
+.site-foot p {
+  color: var(--nz-text-muted);
+  margin: 0;
+}
+
+
+/* ── Schmale Bildschirme ─────────────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .shots,
+  .howto,
+  .reasons { grid-template-columns: 1fr; }
+
+  .sheet { padding: var(--nz-space-5); }
+
+  .hero { padding: var(--nz-space-7) 0 var(--nz-space-6); }
+
+  /* Regel 20: automatische Silbentrennung greift nur auf schmalen Geräten. */
+  .hero h1 { hyphens: auto; }
 }

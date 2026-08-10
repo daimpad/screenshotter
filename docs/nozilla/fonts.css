@@ -1,0 +1,48 @@
+/* ============================================================================
+   nozilla — Markenschriften, selbst ausgeliefert
+   Zilla Slab · Inter · Space Mono — alle SIL Open Font License 1.1,
+   siehe fonts/OFL.txt.
+
+   Übernommen aus daimpad/nozilla-ci (project/fonts.css). Dort liegen die
+   Schriften als TTF; hier als WOFF2, weil das dieselben Schriften sind, nur
+   webtauglich verpackt — 1010 KB werden so zu 335 KB. Die Lizenz erlaubt das
+   ausdrücklich.
+
+   Kein Font-CDN: die Seite soll offline und ohne Dritte rendern. Das ist
+   nozillas Vorgabe und passt zu diesem Projekt, das genau eine Abhängigkeit hat.
+
+   Nur die tatsächlich benutzten Schnitte. Wer einen weiteren braucht, holt ihn
+   aus dem CI-Repository nach, statt den Browser einen fetten Schnitt rechnen
+   zu lassen.
+============================================================================ */
+
+/* ── Zilla Slab — Display: Überschriften, Sublines, Navigation ──────────── */
+@font-face {
+  font-family: "Zilla Slab";
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url("fonts/ZillaSlab-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Zilla Slab";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("fonts/ZillaSlab-Bold.woff2") format("woff2");
+}
+
+/* ── Inter — Fließtext ─────────────────────────────────────────────────── */
+@font-face {
+  font-family: "Inter";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/Inter-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url("fonts/Inter-SemiBold.woff2") format("woff2");
+}
+
+/* ── Space Mono — Labels, Schaltflächen, Code ──────────────────────────── */
+@font-face {
+  font-family: "Space Mono";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("fonts/SpaceMono-Bold.woff2") format("woff2");
+}

@@ -655,6 +655,13 @@ npm run demo          # baut docs/demo/ neu
 npm run demo:bilder   # danach: die Bilder unter docs/*.jpg neu aufnehmen
 ```
 
+Die Vorschauseite selbst trägt das Erscheinungsbild von
+[nozilla](https://daimpad.github.io/nozilla-ci/ci/). Design System und
+Markenschriften liegen übernommen unter `docs/nozilla/`; Herkunft und Stand
+stehen in [`docs/nozilla/HERKUNFT.md`](docs/nozilla/HERKUNFT.md). Der
+Demo-Report bleibt bewusst im eigenen Design des Werkzeugs — er zeigt, was
+`screenshotter` erzeugt.
+
 Für lesbare URLs im Demo-Report versucht das Skript, die Beispielseiten unter
 `demo.screenshotter.test` auszuliefern — das braucht einen `/etc/hosts`-Eintrag
 und Port 80. Ohne Administratorrechte weicht es auf `127.0.0.1` aus.

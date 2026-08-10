@@ -5,24 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>screenshotter — Full-Page-Screenshots plus HTML-Report</title>
   <meta name="description" content="Ein schlankes Werkzeug, das eine Liste von URLs abarbeitet, jede Seite in voller Scrollhöhe fotografiert und daraus einen fertigen HTML-Report baut. Läuft lokal, ohne Datenbank, ohne Framework.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233b5bdb'/%3E%3Crect x='6' y='9' width='20' height='15' rx='2.5' fill='%23fff'/%3E%3Ccircle cx='16' cy='16.5' r='4' fill='%233b5bdb'/%3E%3C/svg%3E">
+  <!-- Scharfe Kanten, Tinte als Grund, genau eine grüne Stelle — wie jedes
+       Zeichen des Hauses. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Crect x='5' y='8' width='22' height='16' fill='%23FFFEE5'/%3E%3Crect x='13' y='13' width='6' height='6' fill='%2300FF9C'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="nozilla/fonts.css">
+  <link rel="stylesheet" href="nozilla/design-system.css">
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
 
 <header class="hero">
   <div class="wrap">
-    <div class="hero__logo" aria-hidden="true">📸</div>
+    <svg class="hero__mark" viewBox="0 0 32 32" role="img" aria-label="screenshotter">
+      <rect width="32" height="32" fill="var(--nz-line)"></rect>
+      <rect x="5" y="8" width="22" height="16" fill="var(--nz-bg)"></rect>
+      <rect x="13" y="13" width="6" height="6" fill="var(--nz-signal)"></rect>
+    </svg>
+
     <h1>screenshotter</h1>
-    <p class="hero__claim">
-      URLs eintragen, starten, fertig: jede Seite in voller Scrollhöhe als Bild —
+
+    <p class="hero__subline">
+      URLs eintragen, starten, fertig. Jede Seite in voller Scrollhöhe als Bild,
       dazu ein durchsuchbarer Report, der auf jedem Webserver läuft.
     </p>
 
-    <div class="actions">
-      <a class="button button--primary" href="demo/">Demo-Report ansehen</a>
-      <a class="button" href="https://github.com/daimpad/screenshotter/releases/latest/download/screenshotter.zip">Herunterladen</a>
-      <a class="button" href="https://github.com/daimpad/screenshotter">Auf GitHub</a>
+    <div class="hero__actions">
+      <a class="nz-btn nz-btn--primary nz-btn--lg" href="demo/">Demo-Report ansehen</a>
+      <a class="nz-btn nz-btn--lg" href="https://github.com/daimpad/screenshotter/releases/latest/download/screenshotter.zip">Herunterladen</a>
+      <a class="nz-btn nz-btn--lg btn--quiet" href="https://github.com/daimpad/screenshotter">Auf GitHub</a>
     </div>
 
     <p class="hero__note">
@@ -33,138 +43,166 @@
 
 <main>
 
-  <section>
+  <section class="section">
     <div class="wrap">
-      <h2>So sieht das Ergebnis aus</h2>
-      <p class="lead">
-        Der <a href="demo/">Demo-Report</a> ist echt und vollständig bedienbar: Vorschaubilder
-        öffnen eine Lightbox, Spaltenköpfe sortieren, die Ansicht lässt sich zwischen Tabelle
-        und Galerie umschalten. Erzeugt wurde er aus einer erfundenen Beispiel-Website.
-      </p>
+      <div class="section__head">
+        <span class="section__label">Ergebnis</span>
+        <h2>So sieht das Ergebnis aus</h2>
+      </div>
 
-      <div class="shots">
-        <figure>
-          <a href="demo/"><img src="report-tabelle.jpg" alt="Report in der Tabellenansicht mit Kennzahlen, Suchfeld und Vorschaubildern" loading="lazy"></a>
-          <figcaption>Tabellenansicht — sortierbar, durchsuchbar, nach Status filterbar.</figcaption>
-        </figure>
-        <figure>
-          <a href="demo/"><img src="report-galerie.jpg" alt="Report in der Galerieansicht mit Karten" loading="lazy"></a>
-          <figcaption>Galerieansicht — für den schnellen visuellen Durchgang.</figcaption>
-        </figure>
+      <div class="sheet">
+        <p class="sheet__lead">
+          Der <a href="demo/">Demo-Report</a> ist <mark class="g">echt</mark> und vollständig
+          bedienbar: Vorschaubilder öffnen eine Lightbox, Spaltenköpfe sortieren, die Ansicht
+          lässt sich zwischen Tabelle und Galerie umschalten. Erzeugt wurde er aus einer
+          erfundenen Beispiel-Website.
+        </p>
+
+        <div class="shots">
+          <figure>
+            <a href="demo/"><img src="report-tabelle.jpg" alt="Report in der Tabellenansicht mit Kennzahlen, Suchfeld und Vorschaubildern" loading="lazy" width="1280" height="820"></a>
+            <figcaption>Tabellenansicht — sortierbar, durchsuchbar, nach Status filterbar.</figcaption>
+          </figure>
+          <figure>
+            <a href="demo/"><img src="report-galerie.jpg" alt="Report in der Galerieansicht mit Karten" loading="lazy" width="1280" height="820"></a>
+            <figcaption>Galerieansicht — für den schnellen visuellen Durchgang.</figcaption>
+          </figure>
+        </div>
       </div>
     </div>
   </section>
 
-  <section>
+  <section class="section">
     <div class="wrap">
-      <h2>Ohne Kommandozeile</h2>
-      <p class="lead">
-        Ein Befehl startet eine kleine Oberfläche im Browser. Dort trägt man die URLs ein,
-        wählt das Gerät und sieht dem Lauf zu. Unter Windows genügt ein Doppelklick auf
-        <code>screenshotter.cmd</code>.
-      </p>
+      <div class="section__head">
+        <span class="section__label">Bedienung</span>
+        <h2>Ohne Kommandozeile</h2>
+      </div>
 
-      <div class="shots">
-        <figure>
-          <img src="oberflaeche.jpg" alt="Weboberfläche mit Eingabefeld für URLs sowie Geräte- und Formatwahl" loading="lazy">
-          <figcaption>Eingabe: URLs, Gerät, Format — der Rest ist eingeklappt.</figcaption>
-        </figure>
-        <figure>
-          <img src="oberflaeche-lauf.jpg" alt="Laufender Auftrag mit Fortschrittsbalken und Ergebnisliste" loading="lazy">
-          <figcaption>Während des Laufs: Fortschritt, Ergebnisse, Fehler im Klartext.</figcaption>
-        </figure>
+      <div class="sheet">
+        <p class="sheet__lead">
+          Ein Befehl startet eine kleine Oberfläche im Browser. Dort trägt man die URLs ein,
+          wählt das Gerät und sieht dem Lauf zu. Unter Windows genügt ein
+          <mark class="g">Doppelklick</mark> auf <code>screenshotter.cmd</code>.
+        </p>
+
+        <div class="shots">
+          <figure>
+            <img src="oberflaeche.jpg" alt="Weboberfläche mit Eingabefeld für URLs sowie Geräte- und Formatwahl" loading="lazy" width="1180" height="760">
+            <figcaption>Eingabe: URLs, Gerät, Format — der Rest ist eingeklappt.</figcaption>
+          </figure>
+          <figure>
+            <img src="oberflaeche-lauf.jpg" alt="Abgeschlossener Auftrag mit Fortschrittsbalken und Ergebnisliste" loading="lazy" width="1180" height="900">
+            <figcaption>Während des Laufs: Fortschritt, Ergebnisse, Fehler im Klartext.</figcaption>
+          </figure>
+        </div>
       </div>
     </div>
   </section>
 
-  <section>
+  <section class="section">
     <div class="wrap">
-      <h2>In 60 Sekunden</h2>
+      <div class="section__head">
+        <span class="section__label">Einstieg</span>
+        <h2>In 60 Sekunden</h2>
+      </div>
 
-      <div class="two">
-        <div>
-          <pre><code><span class="comment"># Paket entpacken, dann:</span>
+      <div class="sheet">
+        <div class="howto">
+          <div>
+            <pre class="nz-codeblock"><code># Paket entpacken, dann:
 npm install
 node screenshotter.js --serve --open</code></pre>
 
-          <div class="note">
-            <strong>Windows:</strong> ZIP entpacken und <code>screenshotter.cmd</code>
-            doppelklicken. Der Starter richtet beim ersten Mal alles ein.
-            Vorausgesetzt wird nur <a href="https://nodejs.org/de/download">Node.js</a>
-            in der LTS-Version.
+            <p class="hint">
+              <strong>Windows:</strong> ZIP entpacken und <code>screenshotter.cmd</code>
+              doppelklicken. Der Starter richtet beim ersten Mal alles ein.
+              Vorausgesetzt wird nur <a href="https://nodejs.org/de/download">Node.js</a>
+              in der LTS-Version.
+            </p>
           </div>
-        </div>
 
-        <ol class="steps">
-          <li><strong>URLs eintragen</strong> — eine pro Zeile, fehlendes <code>https://</code> wird ergänzt.</li>
-          <li><strong>Gerät wählen</strong> — Desktop, Laptop, Tablet oder Smartphone.</li>
-          <li><strong>Starten</strong> — mehrere Seiten laufen parallel, der Fortschritt ist sichtbar.</li>
-          <li><strong>Report ansehen</strong> — oder den Ordner auf einen Webserver kopieren.</li>
-        </ol>
+          <ol class="steps">
+            <li><strong>URLs eintragen</strong> — eine pro Zeile, fehlendes <code>https://</code> wird ergänzt.</li>
+            <li><strong>Gerät wählen</strong> — Desktop, Laptop, Tablet oder Smartphone.</li>
+            <li><strong>Starten</strong> — mehrere Seiten laufen parallel, der Fortschritt ist sichtbar.</li>
+            <li><strong>Report ansehen</strong> — oder den Ordner auf einen Webserver kopieren.</li>
+          </ol>
+        </div>
       </div>
     </div>
   </section>
 
-  <section>
+  <section class="section">
     <div class="wrap">
-      <h2>Warum so schlank</h2>
-      <p class="lead">
-        Das Werkzeug soll in fünf Jahren noch laufen, ohne dass jemand eine Toolchain
-        wiederbeleben muss.
-      </p>
+      <div class="section__head">
+        <span class="section__label">Haltung</span>
+        <h2>Warum so schlank</h2>
+      </div>
 
-      <ul class="features">
-        <li class="feature">
-          <h3>Genau eine Abhängigkeit</h3>
-          <p>Playwright für Chromium. Alles andere sind Node-Bordmittel — auch der Server der Weboberfläche.</p>
-        </li>
-        <li class="feature">
-          <h3>Kein Build-Schritt</h3>
-          <p>Der Report ist handgeschriebenes HTML, CSS und JavaScript. Kein Bundler, kein Framework.</p>
-        </li>
-        <li class="feature">
-          <h3>Keine Datenbank</h3>
-          <p>Alles liegt flach im Dateisystem. Daneben eine <code>report.json</code> für die Weiterverarbeitung.</p>
-        </li>
-        <li class="feature">
-          <h3>Läuft überall</h3>
-          <p>Der fertige Ordner funktioniert auf Apache, nginx, GitHub Pages, S3 — oder per Doppelklick.</p>
-        </li>
-        <li class="feature">
-          <h3>Auch ohne JavaScript</h3>
-          <p>Beide Tabellen stehen vollständig im HTML. JavaScript ergänzt nur den Komfort.</p>
-        </li>
-        <li class="feature">
-          <h3>Fehler im Klartext</h3>
-          <p>Statt <code>ERR_NAME_NOT_RESOLVED</code> steht dort, was los ist — und was dagegen hilft.</p>
-        </li>
-      </ul>
+      <div class="sheet">
+        <p class="sheet__lead">
+          Das Werkzeug soll in fünf Jahren noch laufen, ohne dass jemand eine
+          <mark class="g">Toolchain</mark> wiederbeleben muss.
+        </p>
+
+        <ul class="reasons">
+          <li>
+            <h3>Genau eine Abhängigkeit</h3>
+            <p>Playwright für Chromium. Alles andere sind Node-Bordmittel — auch der Server der Weboberfläche.</p>
+          </li>
+          <li>
+            <h3>Kein Build-Schritt</h3>
+            <p>Der Report ist handgeschriebenes HTML, CSS und JavaScript. Kein Bundler, kein Framework.</p>
+          </li>
+          <li>
+            <h3>Keine Datenbank</h3>
+            <p>Alles liegt flach im Dateisystem. Daneben eine <code>report.json</code> für die Weiterverarbeitung.</p>
+          </li>
+          <li>
+            <h3>Läuft überall</h3>
+            <p>Der fertige Ordner funktioniert auf Apache, nginx, GitHub Pages, S3 — oder per Doppelklick.</p>
+          </li>
+          <li>
+            <h3>Auch ohne JavaScript</h3>
+            <p>Beide Tabellen stehen vollständig im HTML. JavaScript ergänzt nur den Komfort.</p>
+          </li>
+          <li>
+            <h3>Fehler im Klartext</h3>
+            <p>Statt <code>ERR_NAME_NOT_RESOLVED</code> steht dort, was los ist — und was dagegen hilft.</p>
+          </li>
+        </ul>
+      </div>
     </div>
   </section>
 
-  <section>
+  <section class="band--ink">
     <div class="wrap">
-      <h2>Auch für den Automatik-Betrieb</h2>
-      <p class="lead">
-        Dasselbe Werkzeug arbeitet still im Hintergrund: nächtlich per cron oder als
-        Schritt in einer Pipeline. Der Exit-Code meldet, ob alle Seiten erreichbar waren.
+      <span class="section__label">Automatik</span>
+      <h2>Läuft auch ohne dich</h2>
+      <p>
+        Dasselbe Werkzeug arbeitet still im Hintergrund: nächtlich per cron oder als Schritt
+        in einer Pipeline. Der Exit-Code meldet, ob alle Seiten erreichbar waren.
       </p>
-      <pre><code>node screenshotter.js --input urls.txt --out public --allow-failures</code></pre>
+      <pre class="nz-codeblock"><code>node screenshotter.js --input urls.txt --out public --allow-failures</code></pre>
     </div>
   </section>
 
 </main>
 
-<footer>
+<footer class="site-foot">
   <div class="wrap">
-    <p>
-      <a href="https://github.com/daimpad/screenshotter">Quelltext</a> ·
-      <a href="https://github.com/daimpad/screenshotter#readme">Handbuch</a> ·
-      <a href="https://github.com/daimpad/screenshotter/releases">Alle Versionen</a> ·
+    <nav>
+      <a href="https://github.com/daimpad/screenshotter">Quelltext</a>
+      <a href="https://github.com/daimpad/screenshotter#readme">Handbuch</a>
+      <a href="https://github.com/daimpad/screenshotter/releases">Alle Versionen</a>
       <a href="demo/">Demo-Report</a>
+    </nav>
+    <p>
+      <a href="https://github.com/daimpad/screenshotter/blob/main/LICENSE">MIT-Lizenz</a> ·
+      Die Beispielseiten im Demo-Report sind frei erfunden ·
+      Erscheinungsbild nach dem <a href="https://daimpad.github.io/nozilla-ci/ci/">nozilla CI</a>.
     </p>
-    <p><a href="https://github.com/daimpad/screenshotter/blob/main/LICENSE">MIT-Lizenz</a> ·
-      Die Beispielseiten im Demo-Report sind frei erfunden.</p>
   </div>
 </footer>
 
