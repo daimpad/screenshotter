@@ -22,7 +22,8 @@
     "clean": "node -e \"import('node:fs').then(fs=>{for(const p of ['screenshots','index.html','report.json','assets'])fs.rmSync(p,{recursive:true,force:true});console.log('output entfernt')})\"",
     "test:ui": "node --test test/server.test.js",
     "serve": "node screenshotter.js --serve --open",
-    "demo": "node tools/build-demo.mjs"
+    "demo": "node tools/build-demo.mjs",
+    "demo:bilder": "node tools/build-shots.mjs"
   },
   "keywords": [
     "screenshot",

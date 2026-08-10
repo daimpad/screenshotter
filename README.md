@@ -651,7 +651,8 @@ Dazu gehört ein **echter, anklickbarer** [Demo-Report](https://daimpad.github.i
 erzeugt aus erfundenen Beispielseiten:
 
 ```bash
-npm run demo      # baut docs/demo/ neu
+npm run demo          # baut docs/demo/ neu
+npm run demo:bilder   # danach: die Bilder unter docs/*.jpg neu aufnehmen
 ```
 
 Für lesbare URLs im Demo-Report versucht das Skript, die Beispielseiten unter

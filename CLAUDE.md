@@ -37,6 +37,7 @@ node screenshotter.js https://example.com --out /tmp/probe --open
 node screenshotter.js --serve --open
 
 npm run demo                # baut den Demo-Report unter docs/ neu
+npm run demo:bilder         # danach: docs/*.jpg für Vorschauseite und README
 ```
 
 `node --test test/` funktioniert **nicht** — Node hält das Verzeichnis für einen
@@ -87,8 +88,14 @@ JPG-Screenshots und unter `demo/` ein echter, eingecheckter Report.
 * Das ZIP entsteht mit `git archive` und respektiert damit zwei Dinge, die eine
   handgebaute Zip-Datei verlöre: die `export-ignore`-Regeln aus `.gitattributes`
   und die CRLF-Zeilenenden von `screenshotter.cmd`.
-* Wer die Bilder unter `docs/*.jpg` erneuert, sollte vorher `npm run demo`
-  laufen lassen — sonst zeigen Vorschauseite und README verschiedene Stände.
+* Die Bilder unter `docs/*.jpg` entstehen mit `npm run demo:bilder`
+  (`tools/build-shots.mjs`) — **immer erst nach `npm run demo`**, sonst
+  fotografiert es einen alten Demo-Report und Vorschauseite und README zeigen
+  verschiedene Stände. Die beiden Bilder der Weboberfläche entstehen, indem das
+  Skript `--serve` wirklich startet und das Formular bedient; deshalb stimmt
+  darin auch die Versionsnummer in der Fußzeile. Beide Skripte teilen sich die
+  Beispielseiten: `build-shots.mjs` importiert `startDemoSite()` aus
+  `build-demo.mjs`, damit Report und Bilder dieselbe Welt zeigen.
 
 ## Konventionen
 
