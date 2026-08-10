@@ -12,7 +12,7 @@
  * sind weniger hübsch.
  */
 import { spawn } from 'node:child_process';
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, realpathSync } from 'node:fs';
 import { mkdir, rm } from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -142,59 +142,93 @@ const PAGES = {
     <p>Nordlicht Studio · Hafenstraße 12 · 24103 Kiel<br>hallo@nordlicht.example · 0431 123456</p></main>`),
 };
 
-const server = http.createServer((request, response) => {
-  const { pathname } = new URL(request.url, 'http://x');
+/**
+ * Startet die Beispielseiten und liefert `{ origin, close }`.
+ *
+ * Auch von tools/build-shots.mjs verwendet — die Bilder für Vorschauseite und
+ * README sollen dieselben Seiten zeigen wie der Demo-Report, sonst zeigen die
+ * beiden verschiedene Welten.
+ */
+export async function startDemoSite() {
+  const server = http.createServer((request, response) => {
+    const { pathname } = new URL(request.url, 'http://x');
 
-  if (pathname === '/karriere') {
-    response.writeHead(301, { location: '/team' });
-    return response.end();
+    if (pathname === '/karriere') {
+      response.writeHead(301, { location: '/team' });
+      return response.end();
+    }
+    if (pathname === '/alt-produkt') {
+      response.writeHead(410, { 'content-type': 'text/html; charset=utf-8' });
+      return response.end(shell('Nicht mehr verfügbar', '<main><h2>410 — dieses Angebot gibt es nicht mehr</h2><p>Bitte die aktuelle Leistungsübersicht ansehen.</p></main>'));
+    }
+
+    const body = PAGES[pathname];
+    response.writeHead(body ? 200 : 404, { 'content-type': 'text/html; charset=utf-8' });
+    response.end(body ?? shell('Seite nicht gefunden', '<main><h2>404 — Seite nicht gefunden</h2></main>'));
+  });
+
+  let origin;
+  if (tryPrettyHost()) {
+    try {
+      await new Promise((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(80, '127.0.0.1', resolve);
+      });
+      origin = `http://${PRETTY_HOST}`;
+    } catch {
+      server.removeAllListeners('error');
+    }
   }
-  if (pathname === '/alt-produkt') {
-    response.writeHead(410, { 'content-type': 'text/html; charset=utf-8' });
-    return response.end(shell('Nicht mehr verfügbar', '<main><h2>410 — dieses Angebot gibt es nicht mehr</h2><p>Bitte die aktuelle Leistungsübersicht ansehen.</p></main>'));
+
+  if (!origin) {
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    origin = `http://127.0.0.1:${server.address().port}`;
+    console.log('Hinweis: ohne Administratorrechte laufen die Beispielseiten unter', origin);
   }
 
-  const body = PAGES[pathname];
-  response.writeHead(body ? 200 : 404, { 'content-type': 'text/html; charset=utf-8' });
-  response.end(body ?? shell('Seite nicht gefunden', '<main><h2>404 — Seite nicht gefunden</h2></main>'));
-});
+  return { origin, close: () => new Promise((resolve) => server.close(resolve)) };
+}
 
-let origin;
-if (tryPrettyHost()) {
+/** Die Seiten, die in den Demo-Report wandern — in dieser Reihenfolge. */
+export const DEMO_PAGES = ['/', '/leistungen', '/referenzen', '/preise', '/team', '/journal', '/kontakt', '/karriere', '/alt-produkt'];
+
+/** Absichtlich unerreichbar: zeigt im Report den Fehlerzustand samt Hinweis. */
+export const DEMO_DEAD_URL = 'http://nicht-erreichbar.screenshotter.test/';
+
+export const DEMO_TITLE = 'Demo-Report — Nordlicht Studio';
+
+async function main() {
+  const site = await startDemoSite();
+  console.log('Beispielseiten:', site.origin);
+
+  await rm(OUT, { recursive: true, force: true });
+  await mkdir(OUT, { recursive: true });
+
+  const urls = [...DEMO_PAGES.map((page) => `${site.origin}${page}`), DEMO_DEAD_URL];
+
+  const child = spawn(
+    process.execPath,
+    [path.join(ROOT, 'screenshotter.js'), '--out', OUT, '--no-proxy', '--retries', '0',
+      '--title', DEMO_TITLE, '--allow-failures', ...urls],
+    { stdio: 'inherit', env: { ...process.env, NO_COLOR: '1' } },
+  );
+  const code = await new Promise((resolve) => child.on('close', resolve));
+  await site.close();
+
+  console.log(code === 0 ? `\nDemo-Report liegt in ${OUT}` : `\nAbgebrochen mit Code ${code}`);
+  process.exitCode = code === 0 ? 0 : 1;
+}
+
+// Nur beim direkten Aufruf loslaufen — build-shots.mjs importiert die Seiten,
+// ohne dass dabei der Demo-Report neu gebaut werden soll.
+function startedDirectly() {
+  const entry = process.argv[1];
+  if (!entry) return false;
   try {
-    await new Promise((resolve, reject) => {
-      server.once('error', reject);
-      server.listen(80, '127.0.0.1', resolve);
-    });
-    origin = `http://${PRETTY_HOST}`;
+    return realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url));
   } catch {
-    server.removeAllListeners('error');
+    return false;
   }
 }
 
-if (!origin) {
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  origin = `http://127.0.0.1:${server.address().port}`;
-  console.log('Hinweis: ohne Administratorrechte laufen die Beispielseiten unter', origin);
-}
-console.log('Beispielseiten:', origin);
-
-await rm(OUT, { recursive: true, force: true });
-await mkdir(OUT, { recursive: true });
-
-const urls = ['/', '/leistungen', '/referenzen', '/preise', '/team', '/journal', '/kontakt', '/karriere', '/alt-produkt']
-  .map((page) => `${origin}${page}`);
-// Absichtlich unerreichbar: zeigt im Report den Fehlerzustand samt Hinweis.
-urls.push('http://nicht-erreichbar.screenshotter.test/');
-
-const child = spawn(
-  process.execPath,
-  [path.join(ROOT, 'screenshotter.js'), '--out', OUT, '--no-proxy', '--retries', '0',
-    '--title', 'Demo-Report — Nordlicht Studio', '--allow-failures', ...urls],
-  { stdio: 'inherit', env: { ...process.env, NO_COLOR: '1' } },
-);
-const code = await new Promise((resolve) => child.on('close', resolve));
-await new Promise((resolve) => server.close(resolve));
-
-console.log(code === 0 ? `\nDemo-Report liegt in ${OUT}` : `\nAbgebrochen mit Code ${code}`);
-process.exitCode = code === 0 ? 0 : 1;
+if (startedDirectly()) await main();
