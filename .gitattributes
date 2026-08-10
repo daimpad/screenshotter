@@ -9,6 +9,7 @@
 *.md   text eol=lf
 *.txt  text eol=lf
 *.yml  text eol=lf
+LICENSE text eol=lf
 
 # Was NICHT ins Release-ZIP gehört (git archive wertet das aus).
 /test           export-ignore
