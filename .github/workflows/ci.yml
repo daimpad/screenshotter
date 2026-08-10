@@ -1,0 +1,116 @@
+# Prüft jeden Pull Request, bevor er auf main landet.
+#
+# Bis hierher liefen Tests erst *nach* dem Merge, nämlich als Nebenschritt in
+# release.yml — und auch nur die Unit-Tests. Ein Fehler fiel damit frühestens
+# auf main auf.
+#
+# Zwei Aufträge, weil sie unterschiedlich teuer sind: die Unit-Tests brauchen
+# keinen Browser und laufen in Sekunden auf mehreren Plattformen, die Browser-
+# Tests laden Chromium und laufen deshalb nur einmal.
+name: CI
+
+on:
+  pull_request:
+  # Zusätzlich auf main: ein Merge kann Dinge zusammenführen, die einzeln
+  # grün waren. Pushes auf Feature-Branches sind bewusst nicht dabei, sonst
+  # liefe für jeden Pull Request alles doppelt.
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Bei mehreren Pushes kurz hintereinander zählt nur der letzte.
+concurrency:
+  group: "ci-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit-Tests (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Ohne fail-fast sieht man alle Plattformen auf einmal statt nur die
+      # erste, die umfällt.
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node: '18.17'      # die in package.json zugesicherte Untergrenze
+          - os: ubuntu-latest
+            node: '22'
+          - os: windows-latest
+            node: '22'         # Zielplattform des .cmd-Starters
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Abhängigkeiten
+        # Die Unit-Tests starten keinen Browser — der Download wäre reine
+        # Wartezeit.
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm ci --no-audit --no-fund
+
+      - name: Unit-Tests
+        run: npm run test:unit
+
+  browser:
+    name: Browser-Tests (E2E und Weboberfläche)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Abhängigkeiten
+        # Chromium kommt gleich aus dem Cache oder per playwright install,
+        # der Postinstall-Download wäre doppelt.
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm ci --no-audit --no-fund
+
+      - name: Playwright-Version ermitteln
+        id: pw
+        # Der Browser gehört zu genau einer Playwright-Version, deshalb steckt
+        # sie im Cache-Schlüssel — sonst liefe ein neues Playwright gegen ein
+        # altes Chromium.
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Chromium aus dem Cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Chromium laden
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Systembibliotheken für Chromium
+        # Der Cache enthält nur den Browser selbst. Die Systempakete, die
+        # --with-deps mitinstalliert, liegen außerhalb und fehlen nach einem
+        # Cache-Treffer — ohne sie startet Chromium nicht.
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: E2E-Tests
+        run: npm run test:e2e
+
+      - name: Tests der Weboberfläche
+        # Getrennt vom E2E-Schritt, damit man in der Übersicht sofort sieht,
+        # welcher der beiden Bereiche gerissen ist.
+        run: npm run test:ui

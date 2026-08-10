@@ -200,6 +200,11 @@ nicht als literales Steuerzeichen.
 * `test/server.test.js` — startet `--serve` als Unterprozess, bedient das
   Formular im Browser und klopft die API samt Absicherung ab. Enthält
   Angriffsversuche, die vor der Härtung funktioniert haben.
+* `.github/workflows/ci.yml` — fährt dieselben Tests bei jedem Pull Request.
+  Unit-Tests auf Node 18.17 (die zugesicherte Untergrenze aus `package.json`)
+  und 22 sowie auf Windows; Browser-Tests einmal unter Linux. Wer `engines`
+  anhebt, muss die Matrix mitziehen — sonst prüft niemand mehr, was
+  versprochen wird.
 * `test/fixtures/server.js` — deterministische Seiten: lang mit Lazy-Loading,
   kurz, Weiterleitung, 404, ohne Viewport-Meta, Sonderzeichen im Titel. Dazu
   `reservedDeadOrigin()` für einen reproduzierbaren Verbindungsfehler und

@@ -7,6 +7,7 @@
 URLs eintragen, starten, fertig: jede Seite in voller Scrollhöhe als Bild,
 dazu eine durchsuchbare Galerie, die auf jedem Webserver läuft.
 
+[![CI](https://github.com/daimpad/screenshotter/actions/workflows/ci.yml/badge.svg)](https://github.com/daimpad/screenshotter/actions/workflows/ci.yml)
 [![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A5%2018.17-5FA04E?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![Playwright](https://img.shields.io/badge/Engine-Chromium%20via%20Playwright-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![Abhängigkeiten](https://img.shields.io/badge/Abh%C3%A4ngigkeiten-genau%201-3b5bdb)](package.json)
@@ -602,6 +603,10 @@ kurz, Weiterleitung, 404, ohne Viewport-Meta, Sonderzeichen im Titel, toter
 Port), lassen das CLI darüber laufen und prüfen danach Bildmaße, Statuslogik,
 HTML-Escaping sowie Sortierung, Filter, Lightbox, Galerie-Ansicht und
 Kartenlayout im echten Chromium.
+
+Dieselben Tests laufen bei jedem Pull Request über
+[`ci.yml`](.github/workflows/ci.yml): die Unit-Tests auf Node 18.17 und 22 sowie
+auf Windows, die Browser-Tests einmal unter Linux mit Chromium aus dem Cache.
 
 ```text
 screenshotter.cmd         Starter für Windows (Doppelklick)
