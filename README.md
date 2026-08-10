@@ -660,7 +660,7 @@ als Anhang. Die Versionsnummer ist also der Auslöser:
 
 ```bash
 npm version minor --no-git-tag-version   # oder patch / major
-git commit -am "Version 1.4.0" && git push
+git commit -am "Version anheben" && git push
 ```
 
 Das ZIP enthält nur die Laufzeitdateien (CLI, Weboberfläche, Windows-Starter,
@@ -681,4 +681,4 @@ wird mit `git archive`, damit `screenshotter.cmd` seine CRLF-Zeilenenden behält
 
 ## Lizenz
 
-MIT
+[MIT](LICENSE) · Copyright (c) 2026 daimpad
