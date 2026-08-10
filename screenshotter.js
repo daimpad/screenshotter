@@ -4,10 +4,11 @@
  * statischer HTML-Report (index.html) ohne Datenbank und ohne Framework.
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 import { captureAll } from './lib/capture.js';
 import { helpText, parseCliArgs, PRESETS, VERSION } from './lib/cli.js';
@@ -41,10 +42,49 @@ async function initUrlsFile(filePath, reporter) {
   return 0;
 }
 
+/**
+ * Legt den Zielordner an und übersetzt die üblichen Stolpersteine in Klartext.
+ * Ohne das landet hier ein roher Node-Fehler samt Stapelabzug auf dem Schirm.
+ */
+export async function ensureOutputDir(outAbsolute) {
+  try {
+    await mkdir(outAbsolute, { recursive: true });
+  } catch (error) {
+    if (error.code === 'EEXIST' || error.code === 'ENOTDIR') {
+      throw new UserError(`${outAbsolute} ist eine Datei, kein Ordner.`, {
+        hint: 'Mit --out einen Ordnernamen angeben, z.B. --out report',
+      });
+    }
+    if (error.code === 'EACCES' || error.code === 'EPERM') {
+      throw new UserError(`Keine Schreibberechtigung für ${outAbsolute}.`, {
+        hint: 'Einen anderen Zielordner wählen, z.B. --out ~/screenshots',
+      });
+    }
+    if (error.code === 'ENOSPC') {
+      throw new UserError('Kein Platz mehr auf dem Datenträger.');
+    }
+    if (error.code === 'EROFS') {
+      throw new UserError(`${outAbsolute} liegt auf einem schreibgeschützten Datenträger.`);
+    }
+    throw new UserError(`Zielordner ${outAbsolute} konnte nicht angelegt werden: ${error.code ?? error.message}`);
+  }
+}
+
 /** Startet die Weboberfläche und bleibt offen, bis der Nutzer abbricht. */
 async function serve(options, reporter) {
   const { startServer } = await import('./lib/server.js');
   const server = await startServer(options, reporter);
+
+  // Ein Dienst, der stundenlang offen steht, soll an einem einzelnen
+  // unbehandelten Fehler nicht sterben — sonst ist die Oberfläche plötzlich weg.
+  process.on('unhandledRejection', (reason) => {
+    reporter.line(`  ${reporter.red('Unbehandelter Fehler:')} ${reason?.message ?? reason}`);
+    reporter.line(reporter.dim('  Der Dienst läuft weiter. Bitte melden, wenn das öfter vorkommt.'));
+  });
+  process.on('uncaughtException', (error) => {
+    reporter.line(`  ${reporter.red('Unerwarteter Fehler:')} ${error?.message ?? error}`);
+    reporter.line(reporter.dim('  Der Dienst läuft weiter.'));
+  });
 
   const local = options.host === '127.0.0.1' || options.host === 'localhost' || options.host === '::1';
   reporter.line(`  Weboberfläche läuft: ${reporter.bold(server.url)}`);
@@ -129,7 +169,7 @@ async function main(argv) {
   }
 
   const outAbsolute = path.resolve(process.cwd(), options.out);
-  await mkdir(outAbsolute, { recursive: true });
+  await ensureOutputDir(outAbsolute);
 
   const outRelative = path.relative(process.cwd(), outAbsolute);
   const outLabel = !outRelative ? '.' : outRelative.startsWith('..') ? outAbsolute : outRelative;
@@ -217,18 +257,39 @@ async function main(argv) {
   return 0;
 }
 
-main(process.argv.slice(2))
-  .then((code) => {
-    process.exitCode = code;
-  })
-  .catch((error) => {
-    const reporter = new Reporter({ stream: process.stderr });
-    if (error instanceof UserError) {
-      process.stderr.write(`\n  ${reporter.red('Fehler:')} ${error.message}\n`);
-      if (error.hint) process.stderr.write(`  ${reporter.dim(`${reporter.symbols.arrow} ${error.hint}`)}\n\n`);
-      process.exitCode = 2;
-      return;
-    }
-    process.stderr.write(`\n  ${reporter.red('Unerwarteter Fehler:')} ${error?.stack ?? error}\n\n`);
+/**
+ * Nur laufen, wenn diese Datei direkt aufgerufen wurde. Ohne diese Prüfung
+ * würde schon ein `import` aus einem Test heraus einen kompletten Lauf starten.
+ */
+function startedDirectly() {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (startedDirectly()) {
+  main(process.argv.slice(2))
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch(reportFatal);
+}
+
+/** Abschlussmeldung für alles, was bis nach oben durchschlägt. */
+function reportFatal(error) {
+  const reporter = new Reporter({ stream: process.stderr });
+
+  if (error instanceof UserError) {
+    process.stderr.write(`\n  ${reporter.red('Fehler:')} ${error.message}\n`);
+    if (error.hint) process.stderr.write(`  ${reporter.dim(`${reporter.symbols.arrow} ${error.hint}`)}\n\n`);
     process.exitCode = 2;
-  });
+    return;
+  }
+
+  process.stderr.write(`\n  ${reporter.red('Unerwarteter Fehler:')} ${error?.stack ?? error}\n\n`);
+  process.exitCode = 2;
+}

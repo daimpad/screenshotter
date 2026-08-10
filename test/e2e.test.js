@@ -192,10 +192,35 @@ test('index.html rendert beide Tabellen serverseitig (funktioniert ohne JS)', as
   assert.equal(html.match(/<tr data-state="/g).length, 12, '6 Galerie- + 6 Zusammenfassungszeilen erwartet');
 });
 
-test('Seitentitel mit Sonderzeichen werden HTML-escaped', async () => {
+test('ein Seitentitel kann nicht aus dem HTML ausbrechen', async () => {
   const html = await readFile(path.join(outDir, 'index.html'), 'utf8');
-  assert.ok(html.includes('&lt;Script&gt; &amp; &quot;Anführungszeichen&quot;'), 'Titel nicht escaped');
-  assert.ok(!html.includes('<Script> &'), 'roher Titel im HTML gefunden');
+
+  // Der Fixture-Titel ist ein echter Ausbruchsversuch: "><img src=x onerror=...>
+  assert.ok(html.includes('&quot;&gt;&lt;img src=x onerror=alert(1)&gt;'), 'Titel nicht escaped');
+  assert.ok(!html.includes('"><img src=x'), 'roher Ausbruchsversuch im HTML gefunden');
+  assert.ok(!/<img[^>]*onerror/i.test(html), 'eingeschleustes img-Element im HTML');
+
+  // Und im Browser darf daraus kein Element werden.
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const alarme = [];
+  page.on('dialog', (dialog) => { alarme.push(dialog.message()); dialog.dismiss(); });
+  page.on('pageerror', (error) => alarme.push(String(error)));
+
+  await page.goto(pathToFileURL(path.join(outDir, 'index.html')).href, { waitUntil: 'load' });
+  await page.waitForSelector('html.js-ready');
+
+  const eingeschleust = await page.evaluate(
+    () => document.querySelectorAll('img[onerror], img[src="x"]').length,
+  );
+  assert.equal(eingeschleust, 0, 'der Titel hat ein Element erzeugt');
+  assert.deepEqual(alarme, [], `unerwartete Reaktion: ${alarme.join(' | ')}`);
+
+  // Der Titel muss trotzdem als Text ankommen.
+  const sichtbar = await page.locator('.page-title').allTextContents();
+  assert.ok(sichtbar.some((text) => text.includes('<img src=x onerror=alert(1)>')), 'Titel fehlt in der Anzeige');
+
+  await context.close();
 });
 
 test('Report ist im Browser bedienbar: Sortierung, Filter, Suche, Lightbox', async () => {

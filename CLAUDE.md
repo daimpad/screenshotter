@@ -25,7 +25,7 @@ Die drei Leitplanken, die jede Änderung respektieren muss:
 ## Befehle
 
 ```bash
-npm test                    # alles (59 Tests)
+npm test                    # alles (68 Tests)
 npm run test:unit           # nur Unit-Tests, brauchen keinen Browser
 npm run test:e2e            # kompletter CLI-Lauf + Report im echten Chromium
 npm run test:ui             # Weboberfläche: Server, API, Absicherung, Browser
@@ -159,11 +159,25 @@ Browser das Absenden **ohne sichtbare Meldung**. Das Formular trägt deshalb
 `novalidate`, nicht benutzte Felder werden `disabled`, und geprüft wird
 serverseitig in `applyRunOptions()`.
 
-**Der Server ist bewusst eng geschnürt.** Bindung an `127.0.0.1`, Prüfung des
-`Host`-Headers gegen DNS-Rebinding, `resolveWithin()` gegen Pfad-Traversal,
-Allowlist für ausgelieferte Assets, 1-MB-Grenze für Anfragen, ein Lauf zur Zeit
-und keine Proxy-Angabe in `/api/state`. Wer hier etwas ändert, sollte
-`test/server.test.js` gelesen haben.
+**Der Server ist bewusst eng geschnürt.** Die vollständige Liste steht in
+`SECURITY.md`; jede Maßnahme hat einen Test in `test/server.test.js`. Wer am
+Server arbeitet, sollte beides gelesen haben, bevor er eine Prüfung lockert.
+
+**Ein Formular-POST braucht keinen CORS-Preflight.** Mit `enctype="text/plain"`
+und einem passend gebauten Feldnamen entsteht gültiges JSON — eine fremde Seite
+konnte damit Läufe auslösen, Ziel-URL und Ausgabeordner frei wählen. Deshalb
+verlangt `checkWriteRequest()` `application/json`, prüft `Origin` sowie
+`Sec-Fetch-Site` und ein Sitzungsmerkmal. Der Test dazu fährt den Angriff im
+echten Browser nach — er darf nicht entfernt werden.
+
+**Zu große Anfragen nicht sofort abschneiden.** Wer den Lesestrom kappt, während
+der Absender noch sendet, erzeugt beim Client einen Verbindungsabbruch statt
+einer Fehlermeldung. `readBody()` nimmt weiter an, hebt aber nichts mehr auf,
+und lehnt erst am Ende ab — mit einer harten Grenze dahinter.
+
+**`screenshotter.js` darf beim Import nichts tun.** Bis v1.3.0 startete schon
+ein `import` aus einem Test heraus einen kompletten Lauf und schrieb Dateien ins
+Projektverzeichnis. `startedDirectly()` verhindert das.
 
 **`fetch` kann den `Host`-Header nicht setzen.** Für Tests gegen die
 Rebinding-Prüfung muss `node:http` direkt verwendet werden — sonst prüft der
@@ -184,7 +198,8 @@ nicht als literales Steuerzeichen.
 * `test/e2e.test.js` — startet `test/fixtures/server.js`, ruft das CLI als
   Unterprozess auf und prüft den Report anschließend im echten Chromium.
 * `test/server.test.js` — startet `--serve` als Unterprozess, bedient das
-  Formular im Browser und klopft die API ab.
+  Formular im Browser und klopft die API samt Absicherung ab. Enthält
+  Angriffsversuche, die vor der Härtung funktioniert haben.
 * `test/fixtures/server.js` — deterministische Seiten: lang mit Lazy-Loading,
   kurz, Weiterleitung, 404, ohne Viewport-Meta, Sonderzeichen im Titel. Dazu
   `reservedDeadOrigin()` für einen reproduzierbaren Verbindungsfehler und
