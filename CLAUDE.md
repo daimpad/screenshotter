@@ -97,6 +97,36 @@ JPG-Screenshots und unter `demo/` ein echter, eingecheckter Report.
   Beispielseiten: `build-shots.mjs` importiert `startDemoSite()` aus
   `build-demo.mjs`, damit Report und Bilder dieselbe Welt zeigen.
 
+### Die Vorschauseite trägt das nozilla-CI
+
+`docs/index.html` und `docs/site.css` folgen dem Erscheinungsbild aus
+[daimpad/nozilla-ci](https://github.com/daimpad/nozilla-ci). Die Grundlage liegt
+unter `docs/nozilla/` und ist **übernommen, nicht geschrieben** — Herkunft und
+Stand stehen in `docs/nozilla/HERKUNFT.md`. Wer dort etwas ändert, ändert am
+falschen Ort.
+
+Die vier Regeln, an denen sich das Layout entscheidet (vollständig in
+`HAUSREGELN.md` des CI-Repositories):
+
+1. **Fließtext steht auf Weiß**, nie direkt auf dem Papierton. Deshalb liegt
+   jeder Abschnittstext in einem `.sheet`.
+2. **Auf dem Papierton stehen nur Überschriften, Labels und Navigation.**
+3. **Signalgrün ist ausschließlich Aktionsfarbe** — Schaltflächen und die
+   `<mark class="g">`-Marker. Keine Flächen, keine Container.
+6. **Vollflächige Bänder sind weiß; Schwarz genau einmal je Seite.** Das eine
+   schwarze Band ist der Automatik-Abschnitt ganz unten. Ein zweites nimmt dem
+   ersten die Wirkung.
+
+Dazu: Radius immer 0, Schatten nur hart versetzt (nie weichgezeichnet), keine
+Verläufe, **keine Emoji**. Der Report unter `docs/demo/` bleibt bewusst im
+eigenen Design des Werkzeugs — er zeigt, was `screenshotter` erzeugt, nicht wie
+die Vorschauseite aussieht.
+
+**`display: grid` auf einem Listenpunkt macht jedes Kind zur Zelle** — auch
+nackte Textknoten. Die Schrittliste unter „In 60 Sekunden" brach dadurch nach
+jedem Wort um, weil der Fließtext in der 32px-Spalte der Ziffer landete. Die
+Ziffer wird deshalb positioniert, nicht gerastert.
+
 ## Konventionen
 
 * **Benutzertexte auf Deutsch**: Hilfetext, Konsolenausgabe, Fehlermeldungen,
