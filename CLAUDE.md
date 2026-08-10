@@ -192,6 +192,13 @@ ausführen. Genau so wurde `release.yml` verifiziert.
 **Keine rohen ESC-Bytes im Quelltext.** ANSI-Sequenzen als `\u001b` schreiben,
 nicht als literales Steuerzeichen.
 
+**Bildmaße im Test erst messen, wenn das Bild geladen ist.** Die eingepasste
+Größe in der Lightbox entsteht rein über CSS (`max-width`/`max-height`); vorher
+liefert `boundingBox()` die Breite 0. Lokal liegt das PNG im Cache und lädt
+binnen eines Frames, auf einem kalten CI-Läufer nicht — dort nahm der Test 0 als
+Bezugswert und verglich am Ende `205 !== 0`. Vor jeder Messung auf eine Breite
+größer 0 warten. Das war der erste Fund der neuen CI.
+
 ## Tests
 
 * `test/units.test.js` — reine Logik, kein Browser, läuft in Millisekunden.

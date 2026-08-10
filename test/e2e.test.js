@@ -285,6 +285,20 @@ test('Report ist im Browser bedienbar: Sortierung, Filter, Suche, Lightbox', asy
   await page.locator('a.shot-link[href*="tall"]').click();
   await lightbox.waitFor({ state: 'visible' });
   const image = lightbox.locator('.lightbox__img');
+
+  // Die eingepasste Größe entsteht rein über CSS (max-width/max-height) und
+  // steht erst, wenn das PNG geladen ist — vorher misst boundingBox() 0 und
+  // der Vergleich unten hätte keinen Bezugswert. Lokal liegt die Datei im
+  // Cache und lädt binnen eines Frames, auf einem kalten Läufer nicht.
+  await page.waitForFunction(
+    () => {
+      const element = document.querySelector('#lightbox .lightbox__img');
+      return Boolean(element) && element.getBoundingClientRect().width > 0;
+    },
+    null,
+    { timeout: 10_000 },
+  );
+
   const fitted = (await image.boundingBox()).width;
   await image.click({ position: { x: 5, y: 5 } });
   const zoomed = (await image.boundingBox()).width;
