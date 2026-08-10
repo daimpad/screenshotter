@@ -1,6 +1,6 @@
 {
   "name": "screenshotter",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "private": true,
   "description": "Leichtgewichtiges CLI für Full-Page-Screenshots einer URL-Liste plus statischem HTML-Report.",
   "type": "module",

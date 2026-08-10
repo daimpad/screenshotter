@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>screenshotter — Full-Page-Screenshots plus HTML-Report</title>
   <meta name="description" content="Ein schlankes Werkzeug, das eine Liste von URLs abarbeitet, jede Seite in voller Scrollhöhe fotografiert und daraus einen fertigen HTML-Report baut. Läuft lokal, ohne Datenbank, ohne Framework.">
-  <!-- Scharfe Kanten, Tinte als Grund, genau eine grüne Stelle — wie jedes
-       Zeichen des Hauses. -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Crect x='5' y='8' width='22' height='16' fill='%23FFFEE5'/%3E%3Crect x='13' y='13' width='6' height='6' fill='%2300FF9C'/%3E%3C/svg%3E">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <meta property="og:title" content="screenshotter">
+  <meta property="og:description" content="URLs eintragen, starten, fertig. Jede Seite in voller Scrollhöhe als Bild, dazu ein durchsuchbarer Report, der auf jedem Webserver läuft.">
+  <meta property="og:image" content="https://daimpad.github.io/screenshotter/logo.png">
+  <meta property="og:url" content="https://daimpad.github.io/screenshotter/">
+  <meta property="og:type" content="website">
   <link rel="stylesheet" href="nozilla/fonts.css">
   <link rel="stylesheet" href="nozilla/design-system.css">
   <link rel="stylesheet" href="site.css">
@@ -16,28 +19,31 @@
 
 <header class="hero">
   <div class="wrap">
-    <svg class="hero__mark" viewBox="0 0 32 32" role="img" aria-label="screenshotter">
-      <rect width="32" height="32" fill="var(--nz-line)"></rect>
-      <rect x="5" y="8" width="22" height="16" fill="var(--nz-bg)"></rect>
-      <rect x="13" y="13" width="6" height="6" fill="var(--nz-signal)"></rect>
-    </svg>
+    <div class="hero__text">
+      <img class="hero__logo" src="logo.svg" alt="screenshotter" width="120" height="107">
 
-    <h1>screenshotter</h1>
+      <h1>screenshotter</h1>
 
-    <p class="hero__subline">
-      URLs eintragen, starten, fertig. Jede Seite in voller Scrollhöhe als Bild,
-      dazu ein durchsuchbarer Report, der auf jedem Webserver läuft.
-    </p>
+      <p class="hero__subline">
+        URLs eintragen, starten, fertig. Jede Seite in voller Scrollhöhe als Bild,
+        dazu ein durchsuchbarer Report, der auf jedem Webserver läuft.
+      </p>
 
-    <div class="hero__actions">
-      <a class="nz-btn nz-btn--primary nz-btn--lg" href="demo/">Demo-Report ansehen</a>
-      <a class="nz-btn nz-btn--lg" href="https://github.com/daimpad/screenshotter/releases/latest/download/screenshotter.zip">Herunterladen</a>
-      <a class="nz-btn nz-btn--lg btn--quiet" href="https://github.com/daimpad/screenshotter">Auf GitHub</a>
+      <div class="hero__actions">
+        <a class="nz-btn nz-btn--primary nz-btn--lg" href="demo/">Demo-Report ansehen</a>
+        <a class="nz-btn nz-btn--lg" href="https://github.com/daimpad/screenshotter/releases/latest/download/screenshotter.zip">Herunterladen</a>
+        <a class="nz-btn nz-btn--lg btn--quiet" href="https://github.com/daimpad/screenshotter">Auf GitHub</a>
+      </div>
+
+      <p class="hero__note">
+        Läuft lokal auf deinem Rechner · Windows, macOS, Linux · MIT-Lizenz
+      </p>
     </div>
 
-    <p class="hero__note">
-      Läuft lokal auf deinem Rechner · Windows, macOS, Linux · MIT-Lizenz
-    </p>
+    <!-- Schmuckbild: der Stapel aufgenommener Seiten, vorn die scharf
+         gestellte. Rein dekorativ, deshalb ohne Alternativtext — die Aussage
+         steht schon in der Subline darüber. -->
+    <img class="hero__bild" src="fensterstapel.png" alt="" width="1408" height="768">
   </div>
 </header>
 
