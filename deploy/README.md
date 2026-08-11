@@ -1,5 +1,83 @@
 # Betrieb auf einem Webserver
 
+> **Zwei Wege — der obere ist für Shared Hosting meist der bessere.**
+>
+> **A. GitHub nimmt auf, der Server bekommt nur Dateien**
+> → [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml),
+> Anleitung unten unter „Ohne Node auf dem Server".
+> Auf dem Paket läuft nichts außer dem Webserver. Kein Node, kein Chromium,
+> keine Speichergrenzen.
+>
+> **B. Der Server nimmt selbst auf** → der Rest dieser Datei.
+> Braucht Node **und** ein Chromium, das startet. Auf günstigen Paketen fehlt
+> dafür oft der Arbeitsspeicher oder eine Systembibliothek.
+
+## Es erscheint die Seite des Hosters statt des Reports
+
+Bevor du irgendetwas umbaust, diese drei Dinge der Reihe nach:
+
+1. **Liegt überhaupt etwas da?** Auf dem Server nachsehen:
+   ```bash
+   ls -la /pfad/zu/httpdocs/
+   ```
+   Steht dort nur die `index.html` des Hosters, ist noch nie ein Lauf
+   angekommen — dann ist es kein Anzeigeproblem, sondern der Lauf fehlt.
+
+2. **Liegt der Report in einem Unterordner?** Mit
+   `AUSGABE=".../httpdocs/screenshots"` erreichst du ihn unter
+   `https://deine-domain.de/screenshots/`, **nicht** unter `/`.
+
+3. **Überdeckt die Platzhalterdatei des Hosters deine?** Apache nimmt die
+   erste Datei aus `DirectoryIndex`. Liegt neben deiner `index.html` noch eine
+   `index.php` des Hosters, gewinnt oft die PHP-Datei. Die Platzhalterdatei
+   löschen oder umbenennen:
+   ```bash
+   mv /pfad/zu/httpdocs/index.php /pfad/zu/httpdocs/index.php.aus
+   ```
+
+Der Report selbst braucht nichts weiter: er ist reines HTML, CSS, JS und PNG.
+Wenn die Dateien im richtigen Ordner liegen, wird er ausgeliefert.
+
+## Ohne Node auf dem Server
+
+Der Weg, der auf Shared Hosting am wenigsten schiefgehen kann: die Aufnahme
+passiert bei GitHub, auf den Server wandert nur das Ergebnis.
+
+Unter **Settings → Secrets and variables → Actions** eintragen:
+
+| Art | Name | Inhalt |
+|---|---|---|
+| Secret | `DEPLOY_HOST` | z.B. `hosting123456.abcd.netcup.net` |
+| Secret | `DEPLOY_USER` | SSH-/FTP-Benutzer des Pakets |
+| Secret | `DEPLOY_SSH_KEY` | privater Schlüssel — **oder** stattdessen: |
+| Secret | `DEPLOY_PASSWORT` | Passwort |
+| Variable | `DEPLOY_PFAD` | Zielordner, z.B. `/httpdocs` |
+| Variable | `DEPLOY_PROTOKOLL` | `sftp` (Vorgabe) oder `ftps` |
+| Variable | `DEPLOY_HOSTKEY` | Rechnerschlüssel des Servers, siehe unten |
+| Variable | `DEPLOY_QUELLE` | `report` (Vorgabe) oder `docs` |
+
+Den Rechnerschlüssel holst du dir einmal:
+
+```bash
+ssh-keyscan -t ed25519 hosting123456.abcd.netcup.net
+```
+
+Die ganze Ausgabezeile kommt in `DEPLOY_HOSTKEY`. **Ohne diese Variable
+funktioniert es zwar auch**, dann wird der Server aber beim ersten Kontakt
+ungeprüft angenommen — und ein Läufer ist jedes Mal neu, also ist es jedes Mal
+der erste Kontakt. Der Workflow warnt dann im Protokoll.
+
+Danach: **Actions → Deploy → Run workflow**. Nachts um 3:20 UTC läuft er
+zusätzlich von allein.
+
+`DEPLOY_PFAD` muss ein **eigener Ordner** sein: der Workflow spiegelt mit
+`--delete`, damit Bilder gelöschter Seiten verschwinden. Zeigt der Pfad auf ein
+Verzeichnis, in dem noch anderes liegt, wäre das andere danach weg.
+
+---
+
+## Der Server nimmt selbst auf
+
 Für Shared Hosting (Plesk, cPanel) und alles andere, wo Node läuft, aber kein
 Dauerprozess erlaubt ist. Der Server holt sich die neuen Versionen selbst, und
 ein Lauf lässt sich von außen anstoßen.

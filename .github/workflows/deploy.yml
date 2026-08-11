@@ -1,0 +1,189 @@
+# Nimmt die Screenshots hier auf und lädt den fertigen Report auf den
+# Webserver. Auf dem Server läuft dabei nichts außer dem Webserver selbst.
+#
+# Warum herum und nicht auf dem Paket:
+# Shared Hosting hat selten genug Arbeitsspeicher für Chromium und fast nie
+# die Systembibliotheken dafür. Ein Läufer hier hat beides, und was ankommt,
+# sind reine Dateien — HTML, CSS, JS, PNG. Die kann jeder Webserver ausliefern.
+#
+# Einzurichten unter Settings → Secrets and variables → Actions:
+#
+#   Secrets (verschlüsselt):
+#     DEPLOY_HOST        z.B. hosting123456.abcd.netcup.net
+#     DEPLOY_USER        der SSH-/FTP-Benutzer des Pakets
+#     DEPLOY_PASSWORT    Passwort  — ODER stattdessen:
+#     DEPLOY_SSH_KEY     privater Schlüssel (dann kein Passwort nötig)
+#
+#   Variables (sichtbar, keine Geheimnisse):
+#     DEPLOY_PFAD        Zielverzeichnis auf dem Server,
+#                        z.B. /httpdocs  oder  /httpdocs/screenshots
+#     DEPLOY_PROTOKOLL   sftp (Vorgabe) oder ftps
+#     DEPLOY_QUELLE      report (Vorgabe) oder docs — was hochgeladen wird
+name: Deploy
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Nachts um 3:20 UTC. Nicht zur vollen Stunde: da drängeln sich alle.
+    - cron: '20 3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "deploy"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Abhängigkeiten
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm ci --no-audit --no-fund
+
+      - name: Chromium
+        if: vars.DEPLOY_QUELLE != 'docs'
+        run: npx playwright install --with-deps chromium
+
+      - name: Screenshots aufnehmen
+        if: vars.DEPLOY_QUELLE != 'docs'
+        # --allow-failures: eine unerreichbare Seite soll die Veröffentlichung
+        # nicht verhindern. Sie steht als Fehler im Report, und genau dafür ist
+        # er da.
+        run: |
+          node screenshotter.js \
+            --input urls.txt \
+            --out veroeffentlichung \
+            --title "${{ vars.DEPLOY_TITEL || 'Screenshots' }}" \
+            --allow-failures
+
+      - name: Vorschauseite statt Report nehmen
+        if: vars.DEPLOY_QUELLE == 'docs'
+        run: cp -r docs veroeffentlichung
+
+      - name: Nachsehen, was hochgeladen wird
+        run: |
+          test -f veroeffentlichung/index.html || {
+            echo "::error::veroeffentlichung/index.html fehlt — es gibt nichts hochzuladen."
+            exit 1
+          }
+          echo "Dateien: $(find veroeffentlichung -type f | wc -l)"
+          echo "Größe:   $(du -sh veroeffentlichung | cut -f1)"
+
+      - name: Einstellungen prüfen
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PASSWORT: ${{ secrets.DEPLOY_PASSWORT }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          fehlt=""
+          [ -n "$HOST" ] || fehlt="$fehlt DEPLOY_HOST"
+          [ -n "$USER" ] || fehlt="$fehlt DEPLOY_USER"
+          [ -n "$PASSWORT" ] || [ -n "$SSH_KEY" ] || fehlt="$fehlt DEPLOY_PASSWORT-oder-DEPLOY_SSH_KEY"
+          [ -n "${{ vars.DEPLOY_PFAD }}" ] || fehlt="$fehlt DEPLOY_PFAD"
+          if [ -n "$fehlt" ]; then
+            echo "::error::Es fehlt:$fehlt — siehe Kopf dieser Datei."
+            exit 1
+          fi
+
+      - name: lftp installieren
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      - name: Hochladen
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          BENUTZER: ${{ secrets.DEPLOY_USER }}
+          PASSWORT: ${{ secrets.DEPLOY_PASSWORT }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOSTKEY: ${{ vars.DEPLOY_HOSTKEY }}
+          PFAD: ${{ vars.DEPLOY_PFAD }}
+          PROTOKOLL: ${{ vars.DEPLOY_PROTOKOLL || 'sftp' }}
+        run: |
+          set -eu
+
+          # Ein privater Schlüssel wird als Datei gebraucht, nicht als Text.
+          schluessel=""
+          if [ -n "$SSH_KEY" ]; then
+            umask 077
+            printf '%s\n' "$SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+            schluessel="$RUNNER_TEMP/deploy_key"
+          fi
+
+          # Ist der Rechnerschlüssel des Servers hinterlegt, wird er verlangt.
+          # Sonst bleibt nur Vertrauen beim ersten Kontakt — der Läufer ist
+          # jedes Mal neu, es ist also jedes Mal der erste. Wer den Schlüssel
+          # hinterlegt, schließt genau diese Lücke.
+          if [ -n "$HOSTKEY" ]; then
+            printf '%s\n' "$HOSTKEY" > "$RUNNER_TEMP/known_hosts"
+            hostpruefung="-o UserKnownHostsFile=$RUNNER_TEMP/known_hosts -o StrictHostKeyChecking=yes"
+          else
+            echo "::warning::DEPLOY_HOSTKEY ist nicht gesetzt — der Rechnerschlüssel des Servers wird ungeprüft angenommen. Auslesen mit: ssh-keyscan -t ed25519 DEIN-HOST"
+            hostpruefung="-o StrictHostKeyChecking=accept-new"
+          fi
+
+          # set cmd:trace off und xfer:log off: sonst stünde das Passwort im
+          # Protokoll des Laufs. GitHub maskiert Secrets zwar, aber sich darauf
+          # zu verlassen ist die falsche Reihenfolge.
+          {
+            echo 'set cmd:trace off'
+            echo 'set xfer:log off'
+            echo 'set net:max-retries 3'
+            echo 'set net:timeout 20'
+            if [ "$PROTOKOLL" = "ftps" ]; then
+              echo 'set ftp:ssl-force true'
+              echo 'set ftp:ssl-protect-data true'
+              echo 'set ssl:verify-certificate true'
+            else
+              echo 'set sftp:auto-confirm true'
+              if [ -n "$schluessel" ]; then
+                echo "set sftp:connect-program \"ssh -a -x -i $schluessel $hostpruefung\""
+              fi
+            fi
+          } > "$RUNNER_TEMP/lftp.rc"
+
+          # Mit Schlüssel wird ein LEERES Passwort mitgegeben, nicht gar keines.
+          # Ohne das Komma fragt lftp interaktiv nach, findet auf einem Läufer
+          # kein Terminal und meldet "GetPass() failed -- assume anonymous
+          # login" — die Anmeldung scheitert dann, obwohl der Schlüssel stimmt.
+          if [ -n "$schluessel" ]; then
+            anmeldung="open -u \"$BENUTZER\",\"\" $PROTOKOLL://$HOST"
+          else
+            anmeldung="open -u \"$BENUTZER\",\"$PASSWORT\" $PROTOKOLL://$HOST"
+          fi
+
+          # Die Befehle in eine Datei, nicht über /dev/stdin: `lftp -f` erwartet
+          # eine Datei, und ein Fehlschlag dort sähe aus wie ein Verbindungs-
+          # problem.
+          #
+          # mirror -R spiegelt von hier nach dort. --delete räumt im
+          # ZIELVERZEICHNIS auf, damit Bilder gelöschter Seiten verschwinden —
+          # deshalb muss DEPLOY_PFAD ein eigener Ordner sein und nicht das
+          # halbe Paket.
+          {
+            echo "source $RUNNER_TEMP/lftp.rc"
+            echo "$anmeldung"
+            # -f: existiert der Ordner schon, ist das kein Fehler, sondern der
+            # Normalfall ab dem zweiten Lauf.
+            echo "mkdir -p -f $PFAD"
+            echo "mirror -R --delete --parallel=4 --verbose=1 veroeffentlichung $PFAD"
+            echo "bye"
+          } > "$RUNNER_TEMP/lftp.befehle"
+
+          lftp -f "$RUNNER_TEMP/lftp.befehle"
+
+          rm -f "$RUNNER_TEMP/deploy_key" "$RUNNER_TEMP/lftp.rc" "$RUNNER_TEMP/lftp.befehle"
+
+      - name: Fertig
+        run: echo "Hochgeladen nach ${{ vars.DEPLOY_PFAD }} auf dem Zielserver."
