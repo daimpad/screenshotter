@@ -45,6 +45,28 @@ Start. Das Sitzungsmerkmal schützt weiterhin vor fremden Seiten, aber jeder im
 selben Netz kann die Oberfläche bedienen. Nur in vertrauenswürdigen Netzen
 verwenden.
 
+## Der Auslöser auf dem Webserver
+
+`deploy/webhook.php` ist der einzige Teil dieses Werkzeugs, der öffentlich
+erreichbar sein soll. Entsprechend eng ist er geschnürt:
+
+| Maßnahme | Wogegen |
+|---|---|
+| Nimmt **keine** Parameter entgegen | Ein Auslöser, dem man sagen kann, *was* er aufnehmen soll, ist ein offener Anfrage-Weiterleiter — er würde fremde und interne Adressen für den Aufrufer abrufen |
+| `hash_equals` statt `===` | Ein abbrechender Vergleich verrät über die Laufzeit, wie viele Zeichen des Geheimnisses stimmen |
+| Leeres Geheimnis lehnt **alles** ab | Eine halbfertige Einrichtung soll kein offenes Tor sein |
+| Nur `POST` | Ein Lauf ist kein Abruf; Vorschaudienste und Crawler lösen nichts aus |
+| Mindestabstand zwischen Läufen | Flut durch jemanden, der das Geheimnis hat |
+| Sperrverzeichnis per `mkdir` (atomar) | Zwei Chromium-Rudel gleichzeitig |
+| Meldungen ohne Pfadangaben | Verrät die Verzeichnisstruktur nicht |
+
+Das Geheimnis steht in `deploy/screenshotter.conf`, und die gehört **außerhalb
+des Webverzeichnisses** und auf `600`. Die Anleitung in
+[`deploy/README.md`](deploy/README.md) sagt, wie man das nachprüft.
+
+Wer den Webhook nicht braucht, lädt `webhook.php` einfach nicht ins
+Webverzeichnis hoch — dann gibt es diese Angriffsfläche nicht.
+
 ## Der erzeugte Report
 
 `index.html` enthält Seitentitel und URLs der aufgenommenen Seiten — also Text

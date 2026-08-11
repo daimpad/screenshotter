@@ -56,7 +56,21 @@ screenshotter.js       Ablaufsteuerung, Konsolenausgabe, Exit-Codes
   lib/server.js        Weboberfläche: HTTP-API, SSE-Fortschritt, Absicherung
   lib/open.js          Datei im Standardprogramm öffnen
   lib/errors.js        UserError (führt zu Exit-Code 2)
+
+deploy/                Betrieb auf einem Webserver — liegt bewusst NICHT unter
+                       tools/, denn das ist export-ignore. Der Server soll die
+                       Skripte im Release-ZIP mitbekommen, sonst kann er sich
+                       nicht selbst aktualisieren.
+  aktualisieren.sh     neuestes Release holen, prüfen, einwechseln
+  lauf.sh              aufnehmen, daneben bauen, atomar veröffentlichen
+  abholen.sh           Rückfallweg, wenn PHP kein exec darf
+  webhook.php          der einzige öffentlich erreichbare Teil
 ```
+
+Alles unter `deploy/` ist POSIX-`sh`: auf Shared Hosting ist weder gesagt, dass
+`bash` unter `/bin/bash` liegt, noch dass `flock` oder `jq` da sind. Gesperrt
+wird deshalb über `mkdir` (atomar), und JSON liest `node` — das ist ohnehin
+Voraussetzung.
 
 Es gibt zwei Einstiege in denselben Motor: die Kommandozeile und
 `--serve`. Der Server ruft `captureAll()` und `writeReport()` genauso auf wie

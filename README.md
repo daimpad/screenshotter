@@ -463,6 +463,22 @@ python3 -m http.server 8080
 Ohne `--allow-failures` bricht der Schritt ab, sobald eine URL fehlschlägt —
 genau das, was man für einen Erreichbarkeits-Check will.
 
+**Auf einem Webserver (Shared Hosting, Plesk, cPanel):**
+
+Für den Dauerbetrieb liegt unter [`deploy/`](deploy/README.md) ein fertiger
+Satz: der Server holt sich neue Versionen selbst aus den Releases, ein Lauf
+lässt sich per Webhook anstoßen, und der Report wird daneben gebaut und erst
+fertig eingewechselt — ein Besucher sieht nie einen halben Report.
+
+```bash
+deploy/aktualisieren.sh   # neueste Version holen und einwechseln
+deploy/lauf.sh            # aufnehmen und veröffentlichen
+```
+
+Alles darin ist POSIX-`sh` und PHP; `bash`, `jq` oder `flock` werden nicht
+vorausgesetzt, weil die auf geteilten Paketen gern fehlen. Die Absicherung des
+Auslösers steht in [`SECURITY.md`](SECURITY.md#der-auslöser-auf-dem-webserver).
+
 ### report.json
 
 Dieselben Daten maschinenlesbar, praktisch für Diffs und Monitoring:

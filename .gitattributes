@@ -11,6 +11,12 @@
 *.yml  text eol=lf
 LICENSE text eol=lf
 
+# Skripte für den Server MÜSSEN LF behalten. Mit CRLF sucht der Kernel einen
+# Interpreter namens "/bin/sh\r" und meldet "bad interpreter" — ein Fehler,
+# der wie ein fehlendes sh aussieht und keiner ist.
+*.sh   text eol=lf
+*.php  text eol=lf
+
 # Was NICHT ins Release-ZIP gehört (git archive wertet das aus).
 /test           export-ignore
 /tools          export-ignore
