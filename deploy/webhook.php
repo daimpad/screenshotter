@@ -55,13 +55,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     ende(405, 'Nur POST.');
 }
 
+// Der Leser liegt in der Instanz, nicht hier: ins Webverzeichnis gehört nur
+// diese eine Datei.
+$leser = $instanz . '/deploy/konfiguration.php';
+if (!is_file($leser)) {
+    error_log('screenshotter-webhook: konfiguration.php nicht gefunden');
+    ende(503, 'Nicht eingerichtet.');
+}
+require_once $leser;
+
 $konfig = $instanz . '/deploy/screenshotter.conf';
 if (!is_readable($konfig)) {
     error_log('screenshotter-webhook: Konfiguration nicht lesbar');
     ende(503, 'Nicht eingerichtet.');
 }
 
-$conf = parse_ini_file($konfig, false, INI_SCANNER_TYPED);
+$conf = konfigurationLesen($konfig);
 if ($conf === false) {
     error_log('screenshotter-webhook: Konfiguration nicht lesbar');
     ende(503, 'Nicht eingerichtet.');
@@ -80,7 +89,7 @@ if ($gesendet === '' || !hash_equals($geheimnis, $gesendet)) {
 }
 
 // ── Flutschutz ────────────────────────────────────────────────────────────
-$mindestabstand = (int) ($conf['WEBHOOK_MINDESTABSTAND'] ?? 300);
+$mindestabstand = (int) ($conf['WEBHOOK_MINDESTABSTAND'] ?? '300');
 $stempel = $instanz . '/sperre/letzter-webhook';
 if ($mindestabstand > 0 && is_file($stempel)) {
     $verstrichen = time() - (int) filemtime($stempel);
