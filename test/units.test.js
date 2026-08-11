@@ -22,6 +22,37 @@ test('die Versionsnummer steht in package.json und lib/cli.js gleich', async () 
   assert.equal(VERSION, paket.version, `package.json ${paket.version} ≠ cli.js ${VERSION}`);
 });
 
+test('PHP liest screenshotter.conf trotz Shell-Kommentaren', async (t) => {
+  // Die Datei teilen sich Shell und PHP. parse_ini_file stolperte über die
+  // `#`-Kommentare, die die Shell braucht, und lieferte false — der Webhook
+  // meldete dann „nicht eingerichtet", obwohl alles richtig dastand.
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const wurzel = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+
+  if (spawnSync('php', ['--version']).status !== 0) {
+    return t.skip('php ist auf diesem Rechner nicht vorhanden');
+  }
+
+  const skript = `
+    require ${JSON.stringify(path.join(wurzel, 'deploy', 'konfiguration.php'))};
+    $c = konfigurationLesen(${JSON.stringify(path.join(wurzel, 'deploy', 'screenshotter.conf.beispiel'))});
+    if ($c === false) { echo "FALSE"; exit; }
+    echo json_encode($c);
+  `;
+  const lauf = spawnSync('php', ['-r', skript], { encoding: 'utf8' });
+
+  assert.equal(lauf.status, 0, `php brach ab: ${lauf.stderr}`);
+  assert.notEqual(lauf.stdout, 'FALSE', 'Konfiguration wurde nicht gelesen');
+
+  const conf = JSON.parse(lauf.stdout);
+  assert.ok('AUSGABE' in conf, 'AUSGABE fehlt');
+  assert.ok('WEBHOOK_GEHEIMNIS' in conf, 'WEBHOOK_GEHEIMNIS fehlt');
+  assert.equal(conf.REPO, 'daimpad/screenshotter');
+  // Anführungszeichen müssen weg sein, sonst passt kein Vergleich mehr.
+  assert.ok(!conf.AUSGABE.startsWith('"'), 'Anführungszeichen nicht entfernt');
+});
+
 test('parseLine ignoriert Kommentare und Leerzeilen', () => {
   assert.equal(parseLine(''), null);
   assert.equal(parseLine('   '), null);

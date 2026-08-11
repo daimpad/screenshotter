@@ -5,9 +5,10 @@
 #   cp screenshotter.conf.beispiel screenshotter.conf
 #   chmod 600 screenshotter.conf
 #
-# Die Datei wird von den Shell-Skripten eingelesen UND von webhook.php
-# (per parse_ini_file). Deshalb: nur KEY="wert", keine Shell-Ausdrücke,
-# keine Rückwärtsanführungszeichen, kein $VAR.
+# Die Datei wird von zwei Seiten gelesen: die Shell holt sie mit `.`, und
+# webhook.php liest sie selbst zeilenweise. Deshalb nur KEY="wert" — keine
+# Shell-Ausdrücke, keine Rückwärtsanführungszeichen, kein $VAR, und keine
+# Kommentare hinter einem Wert.
 
 
 # ── Wo alles liegt ────────────────────────────────────────────────────────

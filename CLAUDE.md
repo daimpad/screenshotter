@@ -65,7 +65,16 @@ deploy/                Betrieb auf einem Webserver — liegt bewusst NICHT unter
   lauf.sh              aufnehmen, daneben bauen, atomar veröffentlichen
   abholen.sh           Rückfallweg, wenn PHP kein exec darf
   webhook.php          der einzige öffentlich erreichbare Teil
+  konfiguration.php    liest screenshotter.conf — eigene Datei, damit ein
+                       Test sie aufrufen kann, ohne dass der Webhook antwortet
 ```
+
+**`parse_ini_file` kann `screenshotter.conf` nicht lesen.** Die Datei teilen
+sich Shell und PHP; die Shell braucht `#` als Kommentarzeichen, PHPs INI-Leser
+kennt nur `;`, parst die `#`-Zeilen mit und wirft bei einer Klammer darin einen
+Syntaxfehler. Zurück kommt `false`, und der Webhook meldet „nicht eingerichtet",
+obwohl alles richtig dasteht. Deshalb liest `konfiguration.php` selbst. Ein Test
+hält das fest — er überspringt sich, wo kein `php` installiert ist.
 
 Alles unter `deploy/` ist POSIX-`sh`: auf Shared Hosting ist weder gesagt, dass
 `bash` unter `/bin/bash` liegt, noch dass `flock` oder `jq` da sind. Gesperrt
