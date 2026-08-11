@@ -5,9 +5,22 @@ import path from 'node:path';
 import { test } from 'node:test';
 
 import { fileNameFor, runPool } from '../lib/capture.js';
-import { parseCliArgs } from '../lib/cli.js';
+import { parseCliArgs, VERSION } from '../lib/cli.js';
 import { classify, esc, formatBytes, formatDuration } from '../lib/report.js';
 import { normaliseUrl, parseLine, parseUrlList } from '../lib/urls.js';
+
+test('die Versionsnummer steht in package.json und lib/cli.js gleich', async () => {
+  // Sie lebt an zwei Stellen: package.json löst das Release aus, VERSION steht
+  // im Hilfetext, in der Fußzeile des Reports und in report.json. Laufen die
+  // beiden auseinander, meldet ein Release eine andere Nummer als das Werkzeug
+  // darin — genau das ist beim Umziehen eines Branches schon passiert.
+  const { readFile } = await import('node:fs/promises');
+  const { fileURLToPath } = await import('node:url');
+  const wurzel = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+  const paket = JSON.parse(await readFile(path.join(wurzel, 'package.json'), 'utf8'));
+
+  assert.equal(VERSION, paket.version, `package.json ${paket.version} ≠ cli.js ${VERSION}`);
+});
 
 test('parseLine ignoriert Kommentare und Leerzeilen', () => {
   assert.equal(parseLine(''), null);

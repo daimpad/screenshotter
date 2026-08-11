@@ -1,0 +1,65 @@
+# screenshotter — Einstellungen für den Betrieb auf dem Webserver
+#
+# Kopieren nach screenshotter.conf und anpassen:
+#
+#   cp screenshotter.conf.beispiel screenshotter.conf
+#   chmod 600 screenshotter.conf
+#
+# Die Datei wird von den Shell-Skripten eingelesen UND von webhook.php
+# (per parse_ini_file). Deshalb: nur KEY="wert", keine Shell-Ausdrücke,
+# keine Rückwärtsanführungszeichen, kein $VAR.
+
+
+# ── Wo alles liegt ────────────────────────────────────────────────────────
+# Das Verzeichnis dieser Datei ist die Instanz. Darunter entstehen:
+#   versionen/<nr>/   die entpackten Releases
+#   aktuell           Verweis auf die benutzte Version
+#   urls.txt          deine URL-Liste (bleibt bei Aktualisierungen erhalten)
+#   log/              Protokolle
+#   sperre/           Sperrverzeichnis gegen Doppelläufe
+
+# Wohin der fertige Report soll — das öffentliche Verzeichnis.
+# MUSS ein eigener Ordner sein, nicht dein Webwurzelverzeichnis selbst:
+# beim Veröffentlichen wird er ersetzt.
+AUSGABE="/var/www/vhosts/beispiel.de/httpdocs/screenshots"
+
+
+# ── Aufnahme ──────────────────────────────────────────────────────────────
+
+# Titel über dem Report.
+TITEL="Abnahme beispiel.de"
+
+# Wie viele Seiten gleichzeitig. Auf Shared Hosting lieber niedrig — jeder
+# Browser-Tab kostet Arbeitsspeicher, und der ist dort geteilt.
+PARALLEL="2"
+
+# Geräteprofil: desktop, laptop, tablet oder mobile.
+PROFIL="desktop"
+
+# Zeitgrenze je Seite in Millisekunden.
+ZEITGRENZE="45000"
+
+# Weitere Argumente, die unverändert an screenshotter.js gehen.
+# Beispiel: "--hide '#cookie-banner' --delay 500"
+EXTRA=""
+
+
+# ── Selbstaktualisierung ──────────────────────────────────────────────────
+
+# Aus welchem Repository die Releases geholt werden.
+REPO="daimpad/screenshotter"
+
+# Wie viele alte Versionen aufgehoben werden, um zurückwechseln zu können.
+VERSIONEN_BEHALTEN="3"
+
+
+# ── Webhook ───────────────────────────────────────────────────────────────
+
+# Das Geheimnis, mit dem webhook.php einen Aufruf akzeptiert.
+# Erzeugen mit:  head -c 32 /dev/urandom | base64 | tr -d '=+/'
+# Leer lassen heißt: der Webhook lehnt JEDEN Aufruf ab.
+WEBHOOK_GEHEIMNIS=""
+
+# Mindestabstand zwischen zwei ausgelösten Läufen, in Sekunden.
+# Schützt davor, dass jemand mit gültigem Geheimnis den Server flutet.
+WEBHOOK_MINDESTABSTAND="300"
