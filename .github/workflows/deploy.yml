@@ -16,8 +16,11 @@
 #
 #   Variables (sichtbar, keine Geheimnisse):
 #     DEPLOY_PFAD        Zielverzeichnis auf dem Server.
-#                        Ohne Angabe: /httpdocs/screenshots — erreichbar
-#                        unter https://deine-domain.de/screenshots/
+#                        Ohne Angabe: httpdocs/screenshots — RELATIV zum
+#                        Anmeldeverzeichnis, denn wo man landet, ist von
+#                        Paket zu Paket verschieden. Ein absoluter Pfad
+#                        trifft daneben, sobald der Zugang eingesperrt ist.
+#                        Erreichbar unter https://deine-domain.de/screenshots/
 #     DEPLOY_PROTOKOLL   sftp (Vorgabe) oder ftps
 #     DEPLOY_QUELLE      report (Vorgabe) oder docs — was hochgeladen wird
 name: Deploy
@@ -129,7 +132,7 @@ jobs:
           PASSWORT: ${{ secrets.DEPLOY_PASSWORT }}
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           HOSTKEY: ${{ vars.DEPLOY_HOSTKEY }}
-          PFAD: ${{ vars.DEPLOY_PFAD || '/httpdocs/screenshots' }}
+          PFAD: ${{ vars.DEPLOY_PFAD || 'httpdocs/screenshots' }}
           PROTOKOLL: ${{ vars.DEPLOY_PROTOKOLL || 'sftp' }}
         run: |
           set -eu
@@ -208,4 +211,4 @@ jobs:
 
       - name: Fertig
         if: steps.pruefen.outputs.bereit == 'true'
-        run: echo "Hochgeladen nach ${{ vars.DEPLOY_PFAD || '/httpdocs/screenshots' }} auf dem Zielserver."
+        run: echo "Hochgeladen nach ${{ vars.DEPLOY_PFAD || 'httpdocs/screenshots' }} auf dem Zielserver."
