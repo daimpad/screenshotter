@@ -15,8 +15,9 @@
 #     DEPLOY_SSH_KEY     privater Schlüssel (dann kein Passwort nötig)
 #
 #   Variables (sichtbar, keine Geheimnisse):
-#     DEPLOY_PFAD        Zielverzeichnis auf dem Server,
-#                        z.B. /httpdocs  oder  /httpdocs/screenshots
+#     DEPLOY_PFAD        Zielverzeichnis auf dem Server.
+#                        Ohne Angabe: /httpdocs/screenshots — erreichbar
+#                        unter https://deine-domain.de/screenshots/
 #     DEPLOY_PROTOKOLL   sftp (Vorgabe) oder ftps
 #     DEPLOY_QUELLE      report (Vorgabe) oder docs — was hochgeladen wird
 name: Deploy
@@ -92,7 +93,6 @@ jobs:
           [ -n "$HOST" ] || fehlt="$fehlt DEPLOY_HOST"
           [ -n "$USER" ] || fehlt="$fehlt DEPLOY_USER"
           [ -n "$PASSWORT" ] || [ -n "$SSH_KEY" ] || fehlt="$fehlt DEPLOY_PASSWORT-oder-DEPLOY_SSH_KEY"
-          [ -n "${{ vars.DEPLOY_PFAD }}" ] || fehlt="$fehlt DEPLOY_PFAD"
           if [ -n "$fehlt" ]; then
             echo "::error::Es fehlt:$fehlt — siehe Kopf dieser Datei."
             exit 1
@@ -108,7 +108,7 @@ jobs:
           PASSWORT: ${{ secrets.DEPLOY_PASSWORT }}
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           HOSTKEY: ${{ vars.DEPLOY_HOSTKEY }}
-          PFAD: ${{ vars.DEPLOY_PFAD }}
+          PFAD: ${{ vars.DEPLOY_PFAD || '/httpdocs/screenshots' }}
           PROTOKOLL: ${{ vars.DEPLOY_PROTOKOLL || 'sftp' }}
         run: |
           set -eu
@@ -186,4 +186,4 @@ jobs:
           rm -f "$RUNNER_TEMP/deploy_key" "$RUNNER_TEMP/lftp.rc" "$RUNNER_TEMP/lftp.befehle"
 
       - name: Fertig
-        run: echo "Hochgeladen nach ${{ vars.DEPLOY_PFAD }} auf dem Zielserver."
+        run: echo "Hochgeladen nach ${{ vars.DEPLOY_PFAD || '/httpdocs/screenshots' }} auf dem Zielserver."
