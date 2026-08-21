@@ -1,13 +1,32 @@
-# Veröffentlicht die Vorschauseite aus docs/ auf GitHub Pages.
+# Veröffentlicht die GitHub-Pages-Seite: die Vorschauseite aus docs/ und
+# darunter, unter /report/, einen frisch aufgenommenen Report der URLs aus
+# urls.txt.
+#
+# Hier ist NICHTS einzurichten — keine Secrets, keine Zugangsdaten. Der Läufer
+# nimmt auf, GitHub veröffentlicht. Das ist der Weg mit den wenigsten Teilen:
+# wer Screenshots seiner Seiten online haben will, trägt sie in urls.txt ein,
+# und mehr passiert nicht.
+#
+# Zugangsdaten braucht erst der andere Weg — deploy.yml lädt dieselben Dateien
+# auf einen eigenen Webserver. Ein fremder Rechner lässt sich nun einmal nicht
+# ohne Anmeldung beschreiben.
 #
 # Bewusst nur docs/ und nicht das ganze Repository: ein lokaler Lauf legt seine
 # eigene index.html im Projektordner ab, die würde die Vorschauseite sonst
 # überschreiben.
+#
+# Es kann pro Repository nur EIN Pages-Deployment geben. Deshalb baut dieser
+# Workflow die ganze Seite in einem Stück — ein zweiter Workflow, der auch nach
+# Pages veröffentlicht, würde dem hier die Hälfte wieder wegnehmen.
 name: Deploy static content to Pages
 
 on:
   push:
     branches: ["main"]
+  schedule:
+    # Nachts um 3:40 UTC, damit der Report von selbst aktuell bleibt.
+    # Nicht zur vollen Stunde: da drängeln sich alle.
+    - cron: '40 3 * * *'
   workflow_dispatch:
 
 permissions:
@@ -30,13 +49,62 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Abhängigkeiten
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm ci --no-audit --no-fund
+
+      - name: Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Seite zusammenstellen
+        run: cp -r docs seite
+
+      # continue-on-error: die Vorschauseite muss auch dann online gehen, wenn
+      # eine Zielseite gerade nicht erreichbar ist. Ohne das nähme ein fremder
+      # Ausfall die eigene Seite mit herunter.
+      - name: Report aufnehmen
+        id: aufnahme
+        continue-on-error: true
+        run: |
+          node screenshotter.js \
+            --input urls.txt \
+            --out seite/report \
+            --title "${{ vars.PAGES_TITEL || 'Screenshots' }}" \
+            --allow-failures
+
+      - name: Ohne Report weitermachen
+        if: steps.aufnahme.outcome != 'success'
+        run: |
+          rm -rf seite/report
+          echo "::warning::Die Aufnahme ist fehlgeschlagen — die Seite geht ohne /report/ online. Der Demo-Report unter /demo/ bleibt davon unberührt."
+
+      - name: Nachsehen, was veröffentlicht wird
+        run: |
+          test -f seite/index.html || {
+            echo "::error::seite/index.html fehlt — es gibt nichts zu veröffentlichen."
+            exit 1
+          }
+          if [ -f seite/report/index.html ]; then
+            echo "Mit Report: $(find seite/report -type f | wc -l) Dateien"
+          else
+            echo "Ohne Report."
+          fi
+          echo "Gesamt: $(find seite -type f | wc -l) Dateien, $(du -sh seite | cut -f1)"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './docs'
+          path: './seite'
 
       - name: Deploy to GitHub Pages
         id: deployment
