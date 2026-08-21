@@ -1,8 +1,15 @@
 # Betrieb auf einem Webserver
 
-> **Zwei Wege — der obere ist für Shared Hosting meist der bessere.**
+> **Drei Wege. Der erste ist der einfachste und braucht gar nichts.**
 >
-> **A. GitHub nimmt auf, der Server bekommt nur Dateien**
+> **0. GitHub nimmt auf und veröffentlicht selbst** — auf GitHub Pages, unter
+> `/report/`. Dafür ist **nichts einzurichten**: keine Secrets, kein Server,
+> kein Passwort. URLs in `urls.txt` eintragen, fertig. Zuständig ist
+> [`.github/workflows/static.yml`](../.github/workflows/static.yml).
+> Der Rest dieser Datei ist nur nötig, wenn der Report auf einer **eigenen**
+> Domain liegen soll.
+>
+> **A. GitHub nimmt auf, der eigene Server bekommt nur Dateien**
 > → [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml),
 > Anleitung unten unter „Ohne Node auf dem Server".
 > Auf dem Paket läuft nichts außer dem Webserver. Kein Node, kein Chromium,

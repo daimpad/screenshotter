@@ -101,7 +101,18 @@ kaputter Link den Lauf nicht abbricht.
 GitHub-Pages-Seite. Deshalb liegen dort `index.html`, `site.css`, die
 JPG-Screenshots und unter `demo/` ein echter, eingecheckter Report.
 
-* `.github/workflows/static.yml` veröffentlicht **nur `docs/`**, nicht das
+* `.github/workflows/static.yml` baut die Pages-Seite in einem Stück: `docs/`
+  wird nach `seite/` kopiert, darunter entsteht unter `seite/report/` ein frisch
+  aufgenommener Report der URLs aus `urls.txt`. Aufgenommen wird auf dem Läufer,
+  veröffentlicht wird das Ergebnis — **ohne jedes Secret**. Zugangsdaten braucht
+  erst `deploy.yml`, das dieselben Dateien auf einen fremden Webserver lädt.
+* **Es kann pro Repository nur ein Pages-Deployment geben.** Ein zweiter
+  Workflow, der ebenfalls nach Pages veröffentlicht, nimmt dem ersten die Hälfte
+  wieder weg — wer zuletzt läuft, gewinnt. Deshalb liegt alles in `static.yml`.
+* Die Aufnahme dort trägt `continue-on-error`. Eine Zielseite, die gerade nicht
+  erreichbar ist, darf die eigene Vorschauseite nicht mit herunternehmen; der
+  Schritt danach räumt ein halbes `seite/report` weg und warnt.
+* Veröffentlicht wird **nur `docs/`** (plus der frische Report), nicht das
   Repository. Sonst würde die `index.html` eines lokalen Laufs die Vorschauseite
   überschreiben. Aus demselben Grund ignoriert `.gitignore` die Wurzelausgabe —
   mit führendem Schrägstrich, sonst verschwände auch `docs/demo/index.html`.
