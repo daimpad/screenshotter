@@ -63,6 +63,7 @@ Unter **Settings → Secrets and variables → Actions** eintragen:
 | Variable | `DEPLOY_HOSTKEY` | Rechnerschlüssel des Servers, siehe unten |
 | Variable | `DEPLOY_QUELLE` | `report` (Vorgabe) oder `docs` |
 | Variable | `DEPLOY_TITEL` | Überschrift im Report, Vorgabe `Screenshots` |
+| Variable | `DEPLOY_URL` | Adresse, unter der der Report stehen soll, z.B. `https://screenshots.beispiel.de/` — **dringend setzen**, siehe unten |
 
 Den Rechnerschlüssel holst du dir einmal:
 
@@ -81,7 +82,16 @@ zusätzlich von allein.
 `DEPLOY_PFAD` muss ein **eigener Ordner** sein: der Workflow spiegelt mit
 `--delete`, damit Bilder gelöschter Seiten verschwinden. Zeigt der Pfad auf ein
 Verzeichnis, in dem noch anderes liegt, wäre das andere danach weg. Deshalb
-steht dort `httpdocs/screenshots` und nicht `httpdocs`.
+steht in der Vorgabe `httpdocs/screenshots` und nicht `httpdocs`.
+
+Hat der Report eine **eigene (Sub-)Domain**, ist deren Webverzeichnis genau
+richtig — dort gehört ohnehin nichts anderes hin, und der Report liegt dann
+unter `/` statt unter `/screenshots/`. Auf einem Plesk-Paket heißt dieses
+Verzeichnis meist so wie die Domain:
+
+```bash
+ls -d ~/*/httpdocs
+```
 
 Und der Pfad ist **relativ**, nicht absolut. Wo eine SSH-Anmeldung landet, ist
 von Paket zu Paket verschieden: auf einem Plesk-Paket im Vhost-Verzeichnis, an
@@ -93,6 +103,29 @@ ssh dein-benutzer@dein-host pwd
 
 Steht dort etwas anderes als das Verzeichnis, in dem `httpdocs` liegt, gehört
 der Rest des Weges in `DEPLOY_PFAD`.
+
+### Hochgeladen heißt nicht angekommen
+
+Ist `DEPLOY_URL` gesetzt, ruft der Lauf hinterher `report.json` unter dieser
+Adresse ab und vergleicht den Zeitstempel darin mit der eigenen Laufzeit. Erst
+wenn dort **dieser** Report liegt, ist der Lauf grün.
+
+Ohne die Variable prüft niemand nach. Der Upload kann fehlerfrei durchlaufen und
+die Dateien trotzdem in einem Verzeichnis ablegen, das der Webserver nie
+ausliefert — dann ist der Lauf grün und unter deiner Adresse steht weiter
+nichts. Genau das ist der häufigste Fehler beim Einrichten, und er sieht von
+außen aus wie Erfolg.
+
+Die beiden Meldungen, die dann kommen:
+
+| Was im Protokoll steht | Was zu tun ist |
+|---|---|
+| `report.json antwortet mit HTTP 403/404` | `DEPLOY_PFAD` und `DEPLOY_URL` zeigen auf verschiedene Verzeichnisse. Auf dem Server nachsehen, welches Verzeichnis die Domain ausliefert. |
+| `Der Report … ist älter als eine Stunde` | Der Upload ist woanders gelandet; ausgeliefert wird ein alter Stand. |
+
+Ein **403 im Browser** heißt übrigens meist: das Verzeichnis, auf das die Domain
+zeigt, ist leer. Der Webserver darf keine Dateiliste zeigen und hat kein
+`index.html` — also weder Report noch Platzhalter, sondern schlicht nichts.
 
 ---
 
