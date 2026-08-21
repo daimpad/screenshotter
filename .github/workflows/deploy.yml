@@ -24,6 +24,12 @@
 #     DEPLOY_PROTOKOLL   sftp (Vorgabe) oder ftps
 #     DEPLOY_QUELLE      report (Vorgabe) oder docs — was hochgeladen wird
 #     DEPLOY_TITEL       Überschrift im Report, Vorgabe: Screenshots
+#     DEPLOY_URL         Adresse, unter der der Report öffentlich steht,
+#                        z.B. https://screenshots.beispiel.de/ — ist sie
+#                        gesetzt, prüft der Lauf hinterher nach, ob dort
+#                        wirklich dieser Report liegt. Dringend zu empfehlen:
+#                        ohne das ist ein grüner Lauf kein Beweis, dass etwas
+#                        angekommen ist.
 #     DEPLOY_HOSTKEY     Rechnerschlüssel des Servers. Ohne ihn wird der
 #                        Server ungeprüft angenommen — und ein Läufer ist
 #                        jedes Mal neu, also ist es jedes Mal das erste Mal.
@@ -214,6 +220,47 @@ jobs:
 
           rm -f "$RUNNER_TEMP/deploy_key" "$RUNNER_TEMP/lftp.rc" "$RUNNER_TEMP/lftp.befehle"
 
+      # Hochgeladen heißt noch nicht angekommen. Ein falscher Zielpfad legt die
+      # Dateien in ein Verzeichnis, das der Webserver nie ausliefert — der Lauf
+      # ist dann grün und die Seite bleibt leer. Genau daran hing dieses Projekt
+      # zweimal fest, deshalb fragt der Lauf jetzt selbst nach.
+      - name: Nachsehen, ob es angekommen ist
+        if: steps.pruefen.outputs.bereit == 'true' && vars.DEPLOY_URL != ''
+        env:
+          ZIEL: ${{ vars.DEPLOY_URL }}
+        run: |
+          set -eu
+          basis="${ZIEL%/}"
+          antwort="$RUNNER_TEMP/angekommen.json"
+
+          # Anhängsel gegen Zwischenspeicher: sonst bestätigt uns ein Cache den
+          # Stand von gestern.
+          code=$(curl -sS -o "$antwort" -w '%{http_code}' --max-time 30 \
+                   "$basis/report.json?lauf=$GITHUB_RUN_ID" || echo 000)
+
+          if [ "$code" != "200" ]; then
+            echo "::error::$basis/report.json antwortet mit HTTP $code. Die Dateien sind hochgeladen, aber unter dieser Adresse nicht zu sehen — dann zeigen DEPLOY_PFAD und DEPLOY_URL nicht auf dasselbe Verzeichnis."
+            exit 1
+          fi
+
+          node -e '
+            const fs = require("node:fs");
+            const daten = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const minuten = (Date.now() - Date.parse(daten.generatedAt)) / 60000;
+            console.log(`Erzeugt: ${daten.generatedAt} (vor ${minuten.toFixed(1)} Minuten)`);
+            console.log(`Seiten:  ${daten.results.length}`);
+            if (!(minuten < 60)) {
+              console.log("::error::Der Report unter dieser Adresse ist älter als eine Stunde. Der Upload ist also woanders gelandet, und was der Webserver ausliefert, ist ein alter Stand.");
+              process.exit(1);
+            }
+          ' "$antwort"
+
+          echo "Angekommen und ausgeliefert: $basis/"
+
       - name: Fertig
         if: steps.pruefen.outputs.bereit == 'true'
-        run: echo "Hochgeladen nach ${{ vars.DEPLOY_PFAD || 'httpdocs/screenshots' }} auf dem Zielserver."
+        run: |
+          echo "Hochgeladen nach ${{ vars.DEPLOY_PFAD || 'httpdocs/screenshots' }} auf dem Zielserver."
+          if [ -z "${{ vars.DEPLOY_URL }}" ]; then
+            echo "::warning::DEPLOY_URL ist nicht gesetzt — ob der Report unter deiner Adresse wirklich ankommt, hat niemand nachgesehen. Ein grüner Lauf sagt bis dahin nur, dass das Hochladen keinen Fehler warf."
+          fi
