@@ -51,10 +51,11 @@ Unter **Settings → Secrets and variables → Actions** eintragen:
 | Secret | `DEPLOY_USER` | SSH-/FTP-Benutzer des Pakets |
 | Secret | `DEPLOY_SSH_KEY` | privater Schlüssel — **oder** stattdessen: |
 | Secret | `DEPLOY_PASSWORT` | Passwort |
-| Variable | `DEPLOY_PFAD` | Zielordner, z.B. `/httpdocs` |
+| Variable | `DEPLOY_PFAD` | Zielordner, **relativ zum Anmeldeverzeichnis**. Ohne Angabe: `httpdocs/screenshots` |
 | Variable | `DEPLOY_PROTOKOLL` | `sftp` (Vorgabe) oder `ftps` |
 | Variable | `DEPLOY_HOSTKEY` | Rechnerschlüssel des Servers, siehe unten |
 | Variable | `DEPLOY_QUELLE` | `report` (Vorgabe) oder `docs` |
+| Variable | `DEPLOY_TITEL` | Überschrift im Report, Vorgabe `Screenshots` |
 
 Den Rechnerschlüssel holst du dir einmal:
 
@@ -72,7 +73,19 @@ zusätzlich von allein.
 
 `DEPLOY_PFAD` muss ein **eigener Ordner** sein: der Workflow spiegelt mit
 `--delete`, damit Bilder gelöschter Seiten verschwinden. Zeigt der Pfad auf ein
-Verzeichnis, in dem noch anderes liegt, wäre das andere danach weg.
+Verzeichnis, in dem noch anderes liegt, wäre das andere danach weg. Deshalb
+steht dort `httpdocs/screenshots` und nicht `httpdocs`.
+
+Und der Pfad ist **relativ**, nicht absolut. Wo eine SSH-Anmeldung landet, ist
+von Paket zu Paket verschieden: auf einem Plesk-Paket im Vhost-Verzeichnis, an
+dessen Wurzel es gar kein `/httpdocs` gibt. Wo du landest, verrät:
+
+```bash
+ssh dein-benutzer@dein-host pwd
+```
+
+Steht dort etwas anderes als das Verzeichnis, in dem `httpdocs` liegt, gehört
+der Rest des Weges in `DEPLOY_PFAD`.
 
 ---
 

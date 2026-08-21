@@ -23,6 +23,11 @@
 #                        Erreichbar unter https://deine-domain.de/screenshots/
 #     DEPLOY_PROTOKOLL   sftp (Vorgabe) oder ftps
 #     DEPLOY_QUELLE      report (Vorgabe) oder docs — was hochgeladen wird
+#     DEPLOY_TITEL       Überschrift im Report, Vorgabe: Screenshots
+#     DEPLOY_HOSTKEY     Rechnerschlüssel des Servers. Ohne ihn wird der
+#                        Server ungeprüft angenommen — und ein Läufer ist
+#                        jedes Mal neu, also ist es jedes Mal das erste Mal.
+#                        Auslesen: ssh-keyscan -t ed25519 DEIN-HOST
 name: Deploy
 
 on:
