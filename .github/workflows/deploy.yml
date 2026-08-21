@@ -42,23 +42,57 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Einstellungen prüfen
+        id: pruefen
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PASSWORT: ${{ secrets.DEPLOY_PASSWORT }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          fehlt=""
+          [ -n "$HOST" ] || fehlt="$fehlt DEPLOY_HOST"
+          [ -n "$USER" ] || fehlt="$fehlt DEPLOY_USER"
+          [ -n "$PASSWORT" ] || [ -n "$SSH_KEY" ] || fehlt="$fehlt DEPLOY_PASSWORT-oder-DEPLOY_SSH_KEY"
+
+          if [ -z "$fehlt" ]; then
+            echo "bereit=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "bereit=false" >> "$GITHUB_OUTPUT"
+
+          # Von Hand gestartet ist das ein Fehler — jemand wartet auf ein
+          # Ergebnis. Nachts ist es keiner: solange nichts hinterlegt ist,
+          # wäre eine tägliche Fehlermeldung nur Lärm, den man wegklickt,
+          # bis man auch die echte wegklickt.
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "::warning::Noch nicht eingerichtet, es fehlt:$fehlt — der nächtliche Lauf wird übersprungen."
+            exit 0
+          fi
+
+          echo "::error::Es fehlt:$fehlt — siehe Kopf dieser Datei."
+          exit 1
+
       - name: Node einrichten
+        if: steps.pruefen.outputs.bereit == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
 
       - name: Abhängigkeiten
+        if: steps.pruefen.outputs.bereit == 'true'
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: npm ci --no-audit --no-fund
 
       - name: Chromium
-        if: vars.DEPLOY_QUELLE != 'docs'
+        if: steps.pruefen.outputs.bereit == 'true' && vars.DEPLOY_QUELLE != 'docs'
         run: npx playwright install --with-deps chromium
 
       - name: Screenshots aufnehmen
-        if: vars.DEPLOY_QUELLE != 'docs'
+        if: steps.pruefen.outputs.bereit == 'true' && vars.DEPLOY_QUELLE != 'docs'
         # --allow-failures: eine unerreichbare Seite soll die Veröffentlichung
         # nicht verhindern. Sie steht als Fehler im Report, und genau dafür ist
         # er da.
@@ -70,10 +104,11 @@ jobs:
             --allow-failures
 
       - name: Vorschauseite statt Report nehmen
-        if: vars.DEPLOY_QUELLE == 'docs'
+        if: steps.pruefen.outputs.bereit == 'true' && vars.DEPLOY_QUELLE == 'docs'
         run: cp -r docs veroeffentlichung
 
       - name: Nachsehen, was hochgeladen wird
+        if: steps.pruefen.outputs.bereit == 'true'
         run: |
           test -f veroeffentlichung/index.html || {
             echo "::error::veroeffentlichung/index.html fehlt — es gibt nichts hochzuladen."
@@ -82,26 +117,12 @@ jobs:
           echo "Dateien: $(find veroeffentlichung -type f | wc -l)"
           echo "Größe:   $(du -sh veroeffentlichung | cut -f1)"
 
-      - name: Einstellungen prüfen
-        env:
-          HOST: ${{ secrets.DEPLOY_HOST }}
-          USER: ${{ secrets.DEPLOY_USER }}
-          PASSWORT: ${{ secrets.DEPLOY_PASSWORT }}
-          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-        run: |
-          fehlt=""
-          [ -n "$HOST" ] || fehlt="$fehlt DEPLOY_HOST"
-          [ -n "$USER" ] || fehlt="$fehlt DEPLOY_USER"
-          [ -n "$PASSWORT" ] || [ -n "$SSH_KEY" ] || fehlt="$fehlt DEPLOY_PASSWORT-oder-DEPLOY_SSH_KEY"
-          if [ -n "$fehlt" ]; then
-            echo "::error::Es fehlt:$fehlt — siehe Kopf dieser Datei."
-            exit 1
-          fi
-
       - name: lftp installieren
+        if: steps.pruefen.outputs.bereit == 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
 
       - name: Hochladen
+        if: steps.pruefen.outputs.bereit == 'true'
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
           BENUTZER: ${{ secrets.DEPLOY_USER }}
@@ -186,4 +207,5 @@ jobs:
           rm -f "$RUNNER_TEMP/deploy_key" "$RUNNER_TEMP/lftp.rc" "$RUNNER_TEMP/lftp.befehle"
 
       - name: Fertig
+        if: steps.pruefen.outputs.bereit == 'true'
         run: echo "Hochgeladen nach ${{ vars.DEPLOY_PFAD || '/httpdocs/screenshots' }} auf dem Zielserver."
