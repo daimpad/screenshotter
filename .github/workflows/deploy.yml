@@ -209,6 +209,16 @@ jobs:
           {
             echo "source $RUNNER_TEMP/lftp.rc"
             echo "$anmeldung"
+            # ls vor dem Hochladen: DEPLOY_PFAD ist relativ zum
+            # Anmeldeverzeichnis, und wo die Anmeldung landet, ist von Paket zu
+            # Paket verschieden — bei Plesk je nachdem, ob der Zugang
+            # eingesperrt ist. Steht der Inhalt im Protokoll, muss man nicht
+            # raten, ob der Zielordner von hier aus erreichbar ist.
+            #
+            # KEIN pwd: lftp gibt darauf nicht das Verzeichnis aus, sondern die
+            # Verbindungs-URL samt Benutzer — bei Passwort-Anmeldung gehört das
+            # nicht ins Protokoll. Aus demselben Grund steht oben cmd:trace off.
+            echo "ls"
             # -f: existiert der Ordner schon, ist das kein Fehler, sondern der
             # Normalfall ab dem zweiten Lauf.
             echo "mkdir -p -f $PFAD"
