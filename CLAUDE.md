@@ -25,7 +25,7 @@ Die drei Leitplanken, die jede Änderung respektieren muss:
 ## Befehle
 
 ```bash
-npm test                    # alles (68 Tests)
+npm test                    # alles (70 Tests)
 npm run test:unit           # nur Unit-Tests, brauchen keinen Browser
 npm run test:e2e            # kompletter CLI-Lauf + Report im echten Chromium
 npm run test:ui             # Weboberfläche: Server, API, Absicherung, Browser
@@ -130,6 +130,34 @@ JPG-Screenshots und unter `demo/` ein echter, eingecheckter Report.
   darin auch die Versionsnummer in der Fußzeile. Beide Skripte teilen sich die
   Beispielseiten: `build-shots.mjs` importiert `startDemoSite()` aus
   `build-demo.mjs`, damit Report und Bilder dieselbe Welt zeigen.
+
+### Der Weg auf einen fremden Webserver
+
+`deploy.yml` nimmt genauso auf wie `static.yml`, lädt das Ergebnis aber per
+lftp auf ein fremdes Paket. Alles, was daran teuer war, steckt in drei
+Entscheidungen:
+
+* **`DEPLOY_PFAD` ist relativ zum Anmeldeverzeichnis, nicht absolut.** Wo eine
+  SSH-Anmeldung landet, ist von Paket zu Paket verschieden — auf einem
+  Plesk-Paket im Vhost-Verzeichnis, an dessen Wurzel es gar kein `/httpdocs`
+  gibt. Ein absoluter Pfad trifft daneben, sobald der Zugang eingesperrt ist.
+  Deshalb listet der Lauf nach der Anmeldung das Verzeichnis ins Protokoll.
+  **Kein `pwd`**: darauf gibt lftp nicht das Verzeichnis aus, sondern die
+  Verbindungs-URL samt Benutzer — bei Passwort-Anmeldung nichts fürs Protokoll.
+* **Hochgeladen heißt nicht angekommen.** `lftp` meldet Erfolg, sobald die
+  Dateien irgendwo liegen. Ist `DEPLOY_URL` gesetzt, ruft der Lauf danach
+  `report.json` unter dieser Adresse ab und vergleicht `generatedAt` mit der
+  eigenen Laufzeit. Ohne diese Prüfung ist ein grüner Lauf kein Beweis — die
+  Dateien können in einem Verzeichnis liegen, das der Webserver nie ausliefert.
+* **Ein leeres Secret ist meistens ein verwechselter Reiter.** Kommt
+  `secrets.DEPLOY_HOST` leer an, prüft der Lauf, ob derselbe Name unter
+  *Variables* steht, und sagt das. Geprüft wird ausschließlich
+  `vars.X != ''`, **nie der Wert**: Variables sind nicht maskiert, und den
+  `env`-Block gibt der Läufer mit aus — ein versehentlich dort abgelegtes
+  Passwort stünde sonst im Klartext im Protokoll.
+
+Ein hinterlegtes Secret erscheint im `env`-Block des Protokolls als `***`.
+Steht dort nichts, ist es nicht „falsch", sondern gar nicht angekommen.
 
 ### Alle drei Oberflächen tragen das nozilla-CI
 
