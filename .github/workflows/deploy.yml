@@ -63,6 +63,14 @@ jobs:
           USER: ${{ secrets.DEPLOY_USER }}
           PASSWORT: ${{ secrets.DEPLOY_PASSWORT }}
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          # Absichtlich nur "gibt es das?" statt des Wertes. Variables sind
+          # NICHT maskiert — stünde hier der Wert, druckte GitHub ein
+          # versehentlich als Variable angelegtes Passwort im Klartext ins
+          # Protokoll, denn den env-Block gibt der Läufer mit aus.
+          HOST_ALS_VAR: ${{ vars.DEPLOY_HOST != '' }}
+          USER_ALS_VAR: ${{ vars.DEPLOY_USER != '' }}
+          PASSWORT_ALS_VAR: ${{ vars.DEPLOY_PASSWORT != '' }}
+          SSH_KEY_ALS_VAR: ${{ vars.DEPLOY_SSH_KEY != '' }}
         run: |
           fehlt=""
           [ -n "$HOST" ] || fehlt="$fehlt DEPLOY_HOST"
@@ -75,6 +83,27 @@ jobs:
           fi
 
           echo "bereit=false" >> "$GITHUB_OUTPUT"
+
+          # Der häufigste Grund, warum ein hinterlegtes Secret hier leer
+          # ankommt: es liegt im falschen Reiter. Steht derselbe Name als
+          # Variable da, ist das keine Vermutung mehr, sondern ablesbar —
+          # und die Meldung kann sagen, was zu tun ist, statt nur "fehlt".
+          #
+          # if statt `[ … ] && …`: eine AND-Liste, deren Test fehlschlägt,
+          # hinterlässt den Rückgabewert 1. Mitten im Skript ist das unter
+          # `bash -e` harmlos (nachgeprüft), als letzte Zeile eines Blocks
+          # färbt es den Schritt rot. `if` kennt die Falle nicht.
+          verwechselt=""
+          if [ "$HOST_ALS_VAR" = "true" ]; then verwechselt="$verwechselt DEPLOY_HOST"; fi
+          if [ "$USER_ALS_VAR" = "true" ]; then verwechselt="$verwechselt DEPLOY_USER"; fi
+          if [ "$PASSWORT_ALS_VAR" = "true" ]; then verwechselt="$verwechselt DEPLOY_PASSWORT"; fi
+          if [ "$SSH_KEY_ALS_VAR" = "true" ]; then verwechselt="$verwechselt DEPLOY_SSH_KEY"; fi
+
+          if [ -n "$verwechselt" ]; then
+            echo "::error::Im Reiter *Variables* liegt:$verwechselt — dort sucht dieser Lauf nicht. Diese Einträge gehören in den Reiter *Secrets* daneben. Wichtig: Variables sind für jeden mit Lesezugriff sichtbar. Steht ein Passwort oder Schlüssel darunter, gilt es als offengelegt — nach dem Umziehen also auch ändern."
+          else
+            echo "Hinweis: unter *Variables* liegt keiner dieser Namen. Dann sind die Einträge entweder in einem anderen Reiter gelandet (Dependabot oder Codespaces statt Actions), an eine Environment gebunden — dieser Job verwendet keine — oder in einem anderen Repository."
+          fi
 
           # Von Hand gestartet ist das ein Fehler — jemand wartet auf ein
           # Ergebnis. Nachts ist es keiner: solange nichts hinterlegt ist,
