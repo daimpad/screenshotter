@@ -402,24 +402,74 @@ server {
 </details>
 
 <details>
-<summary><b>GitHub Pages</b></summary>
+<summary><b>GitHub Pages — ohne Zugangsdaten</b></summary>
 
 <br>
 
-Dieses Repository enthält bereits den Workflow
-[`.github/workflows/static.yml`](.github/workflows/static.yml), der das gesamte
-Repository nach jedem Push auf `main` veröffentlicht:
+Der Weg mit den wenigsten Teilen: **einzurichten ist nichts.** Der Workflow
+[`.github/workflows/static.yml`](.github/workflows/static.yml) nimmt die URLs
+aus `urls.txt` auf einem GitHub-Läufer auf und veröffentlicht das Ergebnis:
 
-```bash
-node screenshotter.js
-git add index.html report.json assets screenshots
-git commit -m "Screenshot-Report aktualisiert"
-git push
+```text
+/          die Vorschauseite aus docs/
+/report/   der frisch aufgenommene Report
 ```
 
-Screenshots sind Binärdateien — wer sie regelmäßig eincheckt, sollte die Historie
-im Blick behalten oder in `.gitignore` die vorbereiteten Zeilen aktivieren und
-stattdessen per rsync deployen.
+Ausgelöst wird das bei jedem Push auf `main` und nachts um 3:40 UTC. Keine
+Secrets, kein Server, kein Passwort — die URLs in `urls.txt` eintragen genügt.
+
+Zwei Dinge, die dabei leicht übersehen werden:
+
+* **Veröffentlicht wird `docs/`, nicht das Repository.** Ein lokaler Lauf legt
+  seine eigene `index.html` im Projektordner ab; die würde sonst die
+  Vorschauseite überschreiben. Aus demselben Grund ignoriert `.gitignore` die
+  Wurzelausgabe — die Screenshots eines lokalen Laufs gehören nicht in die
+  Historie.
+* **Pro Repository gibt es nur ein Pages-Deployment.** Ein zweiter Workflow, der
+  ebenfalls nach Pages veröffentlicht, nimmt dem ersten die Hälfte wieder weg —
+  wer zuletzt läuft, gewinnt. Deshalb baut `static.yml` die ganze Seite in einem
+  Stück, statt den Report nachzureichen.
+
+Die Aufnahme läuft mit `continue-on-error`: eine Zielseite, die gerade nicht
+erreichbar ist, darf die eigene Seite nicht mit herunternehmen.
+
+</details>
+
+<details>
+<summary><b>Eigener Webserver — aufnehmen bei GitHub, hochladen per SFTP</b></summary>
+
+<br>
+
+Wenn der Report unter einer **eigenen** Domain stehen soll, lädt
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) dieselben Dateien
+dorthin. Aufgenommen wird weiter auf dem Läufer — auf dem Paket läuft nichts
+außer dem Webserver, kein Node, kein Chromium.
+
+Unter **Settings → Secrets and variables → Actions** eintragen:
+
+| Reiter | Name | Inhalt |
+|---|---|---|
+| Secrets | `DEPLOY_HOST` | z.B. `hosting123456.abcd.netcup.net` |
+| Secrets | `DEPLOY_USER` | SSH-/FTP-Benutzer |
+| Secrets | `DEPLOY_PASSWORT` | Passwort — **oder** stattdessen `DEPLOY_SSH_KEY` |
+| Variables | `DEPLOY_PFAD` | Zielordner, **relativ zum Anmeldeverzeichnis** |
+| Variables | `DEPLOY_URL` | Adresse, unter der der Report stehen soll |
+
+Zwei Angaben, an denen es erfahrungsgemäß hängt:
+
+* **`DEPLOY_PFAD` ist relativ.** Wo eine SSH-Anmeldung landet, ist von Paket zu
+  Paket verschieden — auf einem Plesk-Paket im Vhost-Verzeichnis, an dessen
+  Wurzel es gar kein `/httpdocs` gibt. Der Lauf listet das Anmeldeverzeichnis
+  ins Protokoll, damit man es nicht raten muss.
+* **`DEPLOY_URL` unbedingt setzen.** Danach ruft der Lauf `report.json` unter
+  dieser Adresse ab und vergleicht den Zeitstempel darin mit der eigenen
+  Laufzeit. Ohne das kann der Upload fehlerfrei durchlaufen und die Dateien
+  trotzdem in einem Verzeichnis ablegen, das der Webserver nie ausliefert —
+  grüner Lauf, leere Seite.
+
+Gespiegelt wird mit `--delete`, damit Bilder gelöschter Seiten verschwinden.
+`DEPLOY_PFAD` muss deshalb ein eigener Ordner sein — oder das Webverzeichnis
+einer Domain, die allein diesem Report gehört.
 
 </details>
 
@@ -463,10 +513,13 @@ python3 -m http.server 8080
 Ohne `--allow-failures` bricht der Schritt ab, sobald eine URL fehlschlägt —
 genau das, was man für einen Erreichbarkeits-Check will.
 
+**Ohne eigenen Server:** siehe „Veröffentlichen → GitHub Pages" weiter oben —
+GitHub nimmt auf und veröffentlicht, einzurichten ist nichts.
+
 **Auf einem Webserver (Shared Hosting, Plesk, cPanel):**
 
-Für den Dauerbetrieb liegt unter [`deploy/`](deploy/README.md) ein fertiger
-Satz: der Server holt sich neue Versionen selbst aus den Releases, ein Lauf
+Soll der Server **selbst** aufnehmen, liegt unter [`deploy/`](deploy/README.md)
+ein fertiger Satz: der Server holt sich neue Versionen selbst aus den Releases, ein Lauf
 lässt sich per Webhook anstoßen, und der Report wird daneben gebaut und erst
 fertig eingewechselt — ein Besucher sieht nie einen halben Report.
 
@@ -610,7 +663,7 @@ Pfade im Report sind relativ.
 ## Entwicklung
 
 ```bash
-npm test           # alles (68 Tests)
+npm test           # alles (70 Tests)
 npm run test:unit  # nur Unit-Tests, ohne Browser
 npm run test:e2e   # kompletter Lauf gegen einen lokalen Testserver
 npm run test:ui    # Weboberfläche im echten Browser
@@ -642,6 +695,8 @@ lib/
   assets/
     report.css            Stylesheet des Reports (wird nach assets/ kopiert)
     report.js             Interaktionen des Reports (wird nach assets/ kopiert)
+    logo.svg              Marke in Report und Weboberfläche
+    fonts/                die beiden Markenschnitte (Zilla Slab, Space Mono)
     ui.html/ui.css/ui.js  die Weboberfläche
 test/
   units.test.js           Unit-Tests
@@ -664,8 +719,10 @@ Weboberfläche stehen in [`SECURITY.md`](SECURITY.md).
 ## Vorschauseite und Releases
 
 Die [Vorschauseite](https://daimpad.github.io/screenshotter/) liegt im Ordner
-`docs/` und wird bei jedem Push auf `main` nach GitHub Pages veröffentlicht.
-Dazu gehört ein **echter, anklickbarer** [Demo-Report](https://daimpad.github.io/screenshotter/demo/),
+`docs/` und wird bei jedem Push auf `main` nach GitHub Pages veröffentlicht —
+zusammen mit einem unter [`/report/`](https://daimpad.github.io/screenshotter/report/)
+frisch aufgenommenen Report der URLs aus `urls.txt`. Dazu gehört ein **echter,
+anklickbarer** [Demo-Report](https://daimpad.github.io/screenshotter/demo/),
 erzeugt aus erfundenen Beispielseiten:
 
 ```bash
