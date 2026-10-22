@@ -71,6 +71,9 @@ jobs:
           USER_ALS_VAR: ${{ vars.DEPLOY_USER != '' }}
           PASSWORT_ALS_VAR: ${{ vars.DEPLOY_PASSWORT != '' }}
           SSH_KEY_ALS_VAR: ${{ vars.DEPLOY_SSH_KEY != '' }}
+          # Wer DEPLOY_URL oder DEPLOY_PFAD gesetzt hat, will diesen Weg —
+          # dann ist ein fehlendes Secret ein Ausfall, kein "noch nicht".
+          ZIEL_GEWOLLT: ${{ vars.DEPLOY_URL != '' || vars.DEPLOY_PFAD != '' }}
         run: |
           fehlt=""
           [ -n "$HOST" ] || fehlt="$fehlt DEPLOY_HOST"
@@ -105,11 +108,16 @@ jobs:
             echo "Hinweis: unter *Variables* liegt keiner dieser Namen. Dann sind die Einträge entweder in einem anderen Reiter gelandet (Dependabot oder Codespaces statt Actions), an eine Environment gebunden — dieser Job verwendet keine — oder in einem anderen Repository."
           fi
 
-          # Von Hand gestartet ist das ein Fehler — jemand wartet auf ein
-          # Ergebnis. Nachts ist es keiner: solange nichts hinterlegt ist,
-          # wäre eine tägliche Fehlermeldung nur Lärm, den man wegklickt,
-          # bis man auch die echte wegklickt.
-          if [ "${{ github.event_name }}" = "schedule" ]; then
+          # Von Hand gestartet ist das immer ein Fehler — jemand wartet auf
+          # ein Ergebnis.
+          #
+          # Nachts nur dann, wenn dieser Weg gewollt ist. Ist weder DEPLOY_URL
+          # noch DEPLOY_PFAD gesetzt, nutzt das Repository ihn schlicht nicht,
+          # und eine tägliche Fehlermeldung wäre Lärm. Ist eins davon gesetzt,
+          # muss der Lauf rot werden: still übersprungen lag die eigene Domain
+          # hier einmal zwei Monate brach, während die Actions-Übersicht jede
+          # Nacht grün zeigte.
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$ZIEL_GEWOLLT" != "true" ]; then
             echo "::warning::Noch nicht eingerichtet, es fehlt:$fehlt — der nächtliche Lauf wird übersprungen."
             exit 0
           fi
