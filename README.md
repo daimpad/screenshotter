@@ -467,6 +467,12 @@ Zwei Angaben, an denen es erfahrungsgemäß hängt:
   trotzdem in einem Verzeichnis ablegen, das der Webserver nie ausliefert —
   grüner Lauf, leere Seite.
 
+Nachts läuft der Weg von selbst. Solange weder `DEPLOY_URL` noch `DEPLOY_PFAD`
+gesetzt ist, überspringt er sich mit einer Warnung — wer ihn nicht nutzt, soll
+keine tägliche Fehlermeldung bekommen. Ist eins davon gesetzt, wird ein Lauf mit
+fehlenden Zugangsdaten **rot**: dann ist der Weg gewollt, und ein Ausfall soll
+auffallen.
+
 Gespiegelt wird mit `--delete`, damit Bilder gelöschter Seiten verschwinden.
 `DEPLOY_PFAD` muss deshalb ein eigener Ordner sein — oder das Webverzeichnis
 einer Domain, die allein diesem Report gehört.

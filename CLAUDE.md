@@ -156,6 +156,13 @@ Entscheidungen:
   `env`-Block gibt der Läufer mit aus — ein versehentlich dort abgelegtes
   Passwort stünde sonst im Klartext im Protokoll.
 
+* **Still übersprungen wird nur, wer diesen Weg nicht nutzt.** Ohne Secrets
+  überspringt der nächtliche Lauf mit einer Warnung — aber nur, solange weder
+  `DEPLOY_URL` noch `DEPLOY_PFAD` gesetzt ist. Ist eins davon da, ist der Weg
+  gewollt, und fehlende Secrets machen den Lauf rot. Vorher sprang er
+  unterschiedslos still: die eigene Domain lag zwei Monate brach, und die
+  Actions-Übersicht zeigte jede Nacht grün.
+
 Ein hinterlegtes Secret erscheint im `env`-Block des Protokolls als `***`.
 Steht dort nichts, ist es nicht „falsch", sondern gar nicht angekommen.
 
