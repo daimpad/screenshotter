@@ -454,6 +454,7 @@ Unter **Settings → Secrets and variables → Actions** eintragen:
 | Secrets | `DEPLOY_PASSWORT` | Passwort — **oder** stattdessen `DEPLOY_SSH_KEY` |
 | Variables | `DEPLOY_PFAD` | Zielordner, **relativ zum Anmeldeverzeichnis** |
 | Variables | `DEPLOY_URL` | Adresse, unter der der Report stehen soll |
+| Variables | `DEPLOY_QUELLE` | `seite`, wenn dort dieselbe Startseite wie auf GitHub Pages stehen soll, mit dem Report unter `/report/`. Ohne Angabe nur der Report |
 
 Zwei Angaben, an denen es erfahrungsgemäß hängt:
 

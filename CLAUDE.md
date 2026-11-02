@@ -162,6 +162,18 @@ Entscheidungen:
   `ftp://` auf Port 21, `ftp:ssl-force` erzwingt das Umschalten auf TLS. Lokal
   nachgestellt mit pyftpdlib und `tls_control_required`: der alte Schritt
   scheitert genauso, der neue lädt verschlüsselt hoch.
+* **`mirror --delete` hat einmal ein fremdes `httpdocs` gelöscht.** `DEPLOY_PFAD`
+  zeigte auf den Plesk-Domain-Ordner statt auf dessen `httpdocs`; der Report
+  landete eine Ebene zu hoch, und `--delete` entfernte `httpdocs` samt dem
+  Checkout, den Plesk-Git dort ausgerollt hatte. Seitdem bricht der Lauf vor
+  dem Spiegeln ab, wenn im Ziel ein `httpdocs` liegt oder der Pfad das
+  Anmeldeverzeichnis selbst ist (`.`, `/`, leer). Lokal gegen pyftpdlib mit
+  derselben Ordnerstruktur geprüft.
+* **`DEPLOY_QUELLE=seite` baut dasselbe Bündel wie `static.yml`:** `docs/` als
+  Startseite, der Report unter `report/`. Die Seite wird **vor** der Aufnahme
+  kopiert — `cp -r docs veroeffentlichung` auf einen schon vorhandenen Ordner
+  legte `docs/` sonst hinein statt daneben. Der Prüfschritt sieht dann unter
+  `/report/report.json` nach und ruft zusätzlich die Startseite ab.
 * **Still übersprungen wird nur, wer diesen Weg nicht nutzt.** Ohne Secrets
   überspringt der nächtliche Lauf mit einer Warnung — aber nur, solange weder
   `DEPLOY_URL` noch `DEPLOY_PFAD` gesetzt ist. Ist eins davon da, ist der Weg
