@@ -156,6 +156,12 @@ Entscheidungen:
   `env`-Block gibt der Läufer mit aus — ein versehentlich dort abgelegtes
   Passwort stünde sonst im Klartext im Protokoll.
 
+* **FTPS heißt hier explizites TLS, geöffnet als `ftp://`.** In lftp bedeutet
+  `ftps://` implizites TLS auf Port 990 — das bieten Plesk und netcup nicht an,
+  der erste echte Lauf endete mit „Connection refused". Geöffnet wird deshalb
+  `ftp://` auf Port 21, `ftp:ssl-force` erzwingt das Umschalten auf TLS. Lokal
+  nachgestellt mit pyftpdlib und `tls_control_required`: der alte Schritt
+  scheitert genauso, der neue lädt verschlüsselt hoch.
 * **Still übersprungen wird nur, wer diesen Weg nicht nutzt.** Ohne Secrets
   überspringt der nächtliche Lauf mit einer Warnung — aber nur, solange weder
   `DEPLOY_URL` noch `DEPLOY_PFAD` gesetzt ist. Ist eins davon da, ist der Weg
