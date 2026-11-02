@@ -76,8 +76,10 @@ funktioniert es zwar auch**, dann wird der Server aber beim ersten Kontakt
 ungeprüft angenommen — und ein Läufer ist jedes Mal neu, also ist es jedes Mal
 der erste Kontakt. Der Workflow warnt dann im Protokoll.
 
-Danach: **Actions → Deploy → Run workflow**. Nachts um 3:20 UTC läuft er
-zusätzlich von allein.
+Danach: **Actions → Deploy → Run workflow**. Im Feld **„URLs"** lassen sich
+Adressen nur für diesen Lauf eintragen (mit Leerzeichen oder Komma getrennt);
+leer gelassen gilt `urls.txt`. Einen Zeitplan gibt es nicht — der steht
+auskommentiert im Kopf von `deploy.yml`, falls er wieder gebraucht wird.
 
 `DEPLOY_PFAD` muss ein **eigener Ordner** sein: der Workflow spiegelt mit
 `--delete`, damit Bilder gelöschter Seiten verschwinden. Zeigt der Pfad auf ein

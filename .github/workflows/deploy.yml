@@ -43,9 +43,18 @@ name: Deploy
 
 on:
   workflow_dispatch:
-  schedule:
-    # Nachts um 3:20 UTC. Nicht zur vollen Stunde: da drängeln sich alle.
-    - cron: '20 3 * * *'
+    # Actions → Deploy → Run workflow zeigt dieses Feld. Gilt nur für den
+    # einen Lauf; leer bleibt es bei urls.txt.
+    inputs:
+      urls:
+        description: 'Adressen für diesen Lauf, mit Leerzeichen oder Komma getrennt. Leer lassen = urls.txt'
+        required: false
+        default: ''
+        type: string
+  # Kein Zeitplan: gestartet wird nur von Hand. Für einen nächtlichen Lauf
+  # wieder eintragen, z.B.
+  #   schedule:
+  #     - cron: '20 3 * * *'
 
 permissions:
   contents: read
@@ -159,9 +168,19 @@ jobs:
         # --allow-failures: eine unerreichbare Seite soll die Veröffentlichung
         # nicht verhindern. Sie steht als Fehler im Report, und genau dafür ist
         # er da.
+        # Die Eingabe kommt über env, nicht als ${{ }} in den Befehl: sonst
+        # würde aus einem Feldinhalt wie "$(…)" ausführbare Shell.
+        env:
+          EINGABE: ${{ inputs.urls }}
         run: |
+          liste=urls.txt
+          if [ -n "$EINGABE" ]; then
+            printf '%s\n' "$EINGABE" | tr -s ',[:space:]' '\n' | sed '/^$/d' > "$RUNNER_TEMP/urls-eingabe.txt"
+            echo "Adressen aus dem Eingabefeld: $(wc -l < "$RUNNER_TEMP/urls-eingabe.txt")"
+            liste="$RUNNER_TEMP/urls-eingabe.txt"
+          fi
           node screenshotter.js \
-            --input urls.txt \
+            --input "$liste" \
             --out "${{ vars.DEPLOY_QUELLE == 'seite' && 'veroeffentlichung/report' || 'veroeffentlichung' }}" \
             --title "${{ vars.DEPLOY_TITEL || 'Screenshots' }}" \
             --allow-failures

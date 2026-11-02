@@ -23,10 +23,10 @@ name: Deploy static content to Pages
 on:
   push:
     branches: ["main"]
-  schedule:
-    # Nachts um 3:40 UTC, damit der Report von selbst aktuell bleibt.
-    # Nicht zur vollen Stunde: da drängeln sich alle.
-    - cron: '40 3 * * *'
+  # Kein Zeitplan mehr: neu gebaut wird bei jedem Push auf main und von
+  # Hand. Für einen nächtlichen Lauf wieder eintragen, z.B.
+  #   schedule:
+  #     - cron: '40 3 * * *'
   workflow_dispatch:
 
 permissions:
