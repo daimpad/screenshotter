@@ -253,6 +253,35 @@ jobs:
             anmeldung="open -u \"$BENUTZER\",\"$PASSWORT\" $schema://$HOST"
           fi
 
+          # Zwei Riegel vor dem Spiegeln, denn mirror --delete räumt das
+          # Zielverzeichnis rücksichtslos auf.
+          #
+          # 1. Kein leerer oder Wurzel-Pfad. "." wäre das Anmeldeverzeichnis —
+          #    auf einem Plesk-Paket das ganze Abonnement mit allen Domains.
+          case "$PFAD" in
+            ""|"."|"./"|"/"|"~"|"~/")
+              echo "::error::DEPLOY_PFAD ist \"$PFAD\" — das wäre das ganze Anmeldeverzeichnis, und --delete würde dort alles entfernen, was nicht zum Report gehört. Bitte den Ordner angeben, in dem nur der Report liegen soll."
+              exit 1
+              ;;
+          esac
+
+          # 2. Liegt im Ziel ein httpdocs, zeigt DEPLOY_PFAD auf den
+          #    Domain-Ordner statt aufs Webverzeichnis. Genau so ist es einmal
+          #    passiert: der Report landete eine Ebene zu hoch, und --delete
+          #    löschte das httpdocs der Domain samt dem Checkout, den Plesk-Git
+          #    dort ausgerollt hatte. Lieber rot als weg.
+          {
+            echo "source $RUNNER_TEMP/lftp.rc"
+            echo "$anmeldung"
+            echo "cls -1d $PFAD/httpdocs"
+          } > "$RUNNER_TEMP/lftp.probe"
+          if lftp -f "$RUNNER_TEMP/lftp.probe" >/dev/null 2>&1; then
+            rm -f "$RUNNER_TEMP/deploy_key" "$RUNNER_TEMP/lftp.rc" "$RUNNER_TEMP/lftp.probe"
+            echo "::error::In $PFAD liegt ein Ordner httpdocs. Dann ist $PFAD der Domain-Ordner, nicht das Webverzeichnis — und --delete würde httpdocs löschen. Vermutlich gehört in DEPLOY_PFAD: $PFAD/httpdocs"
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/lftp.probe"
+
           # Die Befehle in eine Datei, nicht über /dev/stdin: `lftp -f` erwartet
           # eine Datei, und ein Fehlschlag dort sähe aus wie ein Verbindungs-
           # problem.
