@@ -61,7 +61,7 @@ Unter **Settings → Secrets and variables → Actions** eintragen:
 | Variable | `DEPLOY_PFAD` | Zielordner, **relativ zum Anmeldeverzeichnis**. Ohne Angabe: `httpdocs/screenshots` |
 | Variable | `DEPLOY_PROTOKOLL` | `sftp` (Vorgabe) oder `ftps` — explizites TLS auf Port 21, wie bei Plesk |
 | Variable | `DEPLOY_HOSTKEY` | Rechnerschlüssel des Servers, siehe unten |
-| Variable | `DEPLOY_QUELLE` | `report` (Vorgabe) oder `docs` |
+| Variable | `DEPLOY_QUELLE` | `report` (Vorgabe, nur der Report), `seite` (Vorschauseite mit dem Report unter `/report/`, wie auf GitHub Pages) oder `docs` (nur die Vorschauseite) |
 | Variable | `DEPLOY_TITEL` | Überschrift im Report, Vorgabe `Screenshots` |
 | Variable | `DEPLOY_URL` | Adresse, unter der der Report stehen soll, z.B. `https://screenshots.beispiel.de/` — **dringend setzen**, siehe unten |
 

@@ -169,6 +169,11 @@ Entscheidungen:
   dem Spiegeln ab, wenn im Ziel ein `httpdocs` liegt oder der Pfad das
   Anmeldeverzeichnis selbst ist (`.`, `/`, leer). Lokal gegen pyftpdlib mit
   derselben Ordnerstruktur geprüft.
+* **`DEPLOY_QUELLE=seite` baut dasselbe Bündel wie `static.yml`:** `docs/` als
+  Startseite, der Report unter `report/`. Die Seite wird **vor** der Aufnahme
+  kopiert — `cp -r docs veroeffentlichung` auf einen schon vorhandenen Ordner
+  legte `docs/` sonst hinein statt daneben. Der Prüfschritt sieht dann unter
+  `/report/report.json` nach und ruft zusätzlich die Startseite ab.
 * **Still übersprungen wird nur, wer diesen Weg nicht nutzt.** Ohne Secrets
   überspringt der nächtliche Lauf mit einer Warnung — aber nur, solange weder
   `DEPLOY_URL` noch `DEPLOY_PFAD` gesetzt ist. Ist eins davon da, ist der Weg

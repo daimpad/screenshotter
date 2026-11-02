@@ -22,7 +22,12 @@
 #                        trifft daneben, sobald der Zugang eingesperrt ist.
 #                        Erreichbar unter https://deine-domain.de/screenshots/
 #     DEPLOY_PROTOKOLL   sftp (Vorgabe) oder ftps
-#     DEPLOY_QUELLE      report (Vorgabe) oder docs — was hochgeladen wird
+#     DEPLOY_QUELLE      was hochgeladen wird:
+#                          report  nur der Report (Vorgabe)
+#                          seite   die Vorschauseite aus docs/ und darunter
+#                                  unter /report/ der frische Report — genau
+#                                  wie auf GitHub Pages
+#                          docs    nur die Vorschauseite
 #     DEPLOY_TITEL       Überschrift im Report, Vorgabe: Screenshots
 #     DEPLOY_URL         Adresse, unter der der Report öffentlich steht,
 #                        z.B. https://screenshots.beispiel.de/ — ist sie
@@ -142,6 +147,13 @@ jobs:
         if: steps.pruefen.outputs.bereit == 'true' && vars.DEPLOY_QUELLE != 'docs'
         run: npx playwright install --with-deps chromium
 
+      # Erst die Vorschauseite, dann der Report: bei "seite" landet der Report
+      # in einem Unterordner der kopierten Seite. Umgekehrt würde cp -r einen
+      # schon vorhandenen Ordner nicht ersetzen, sondern docs/ hineinlegen.
+      - name: Vorschauseite übernehmen
+        if: steps.pruefen.outputs.bereit == 'true' && (vars.DEPLOY_QUELLE == 'docs' || vars.DEPLOY_QUELLE == 'seite')
+        run: cp -r docs veroeffentlichung
+
       - name: Screenshots aufnehmen
         if: steps.pruefen.outputs.bereit == 'true' && vars.DEPLOY_QUELLE != 'docs'
         # --allow-failures: eine unerreichbare Seite soll die Veröffentlichung
@@ -150,13 +162,9 @@ jobs:
         run: |
           node screenshotter.js \
             --input urls.txt \
-            --out veroeffentlichung \
+            --out "${{ vars.DEPLOY_QUELLE == 'seite' && 'veroeffentlichung/report' || 'veroeffentlichung' }}" \
             --title "${{ vars.DEPLOY_TITEL || 'Screenshots' }}" \
             --allow-failures
-
-      - name: Vorschauseite statt Report nehmen
-        if: steps.pruefen.outputs.bereit == 'true' && vars.DEPLOY_QUELLE == 'docs'
-        run: cp -r docs veroeffentlichung
 
       - name: Nachsehen, was hochgeladen wird
         if: steps.pruefen.outputs.bereit == 'true'
@@ -322,10 +330,35 @@ jobs:
         if: steps.pruefen.outputs.bereit == 'true' && vars.DEPLOY_URL != ''
         env:
           ZIEL: ${{ vars.DEPLOY_URL }}
+          QUELLE: ${{ vars.DEPLOY_QUELLE || 'report' }}
         run: |
           set -eu
           basis="${ZIEL%/}"
           antwort="$RUNNER_TEMP/angekommen.json"
+
+          # Bei "docs" gibt es keinen Report und damit keinen Zeitstempel.
+          # Dann bleibt nur: liefert die Adresse überhaupt eine Seite?
+          if [ "$QUELLE" = "docs" ]; then
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$basis/?lauf=$GITHUB_RUN_ID" || echo 000)
+            if [ "$code" != "200" ]; then
+              echo "::error::$basis/ antwortet mit HTTP $code — die Vorschauseite ist dort nicht zu sehen."
+              exit 1
+            fi
+            echo "Vorschauseite ausgeliefert: $basis/"
+            exit 0
+          fi
+
+          # Bei "seite" liegt der Report unter /report/. Die Startseite wird
+          # zusätzlich geprüft — sie ist ja der Grund für diese Quelle.
+          if [ "$QUELLE" = "seite" ]; then
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$basis/?lauf=$GITHUB_RUN_ID" || echo 000)
+            if [ "$code" != "200" ]; then
+              echo "::error::$basis/ antwortet mit HTTP $code — die Startseite ist dort nicht zu sehen."
+              exit 1
+            fi
+            echo "Startseite ausgeliefert: $basis/"
+            basis="$basis/report"
+          fi
 
           # Anhängsel gegen Zwischenspeicher: sonst bestätigt uns ein Cache den
           # Stand von gestern.
