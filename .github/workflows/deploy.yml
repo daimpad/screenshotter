@@ -197,7 +197,14 @@ jobs:
           # Sonst bleibt nur Vertrauen beim ersten Kontakt — der Läufer ist
           # jedes Mal neu, es ist also jedes Mal der erste. Wer den Schlüssel
           # hinterlegt, schließt genau diese Lücke.
-          if [ -n "$HOSTKEY" ]; then
+          #
+          # Nur bei SFTP: FTPS prüft den Server über sein TLS-Zertifikat
+          # (ssl:verify-certificate unten), einen SSH-Rechnerschlüssel gibt
+          # es dort nicht. Die Warnung führte bei FTPS in die Irre.
+          hostpruefung=""
+          if [ "$PROTOKOLL" = "ftps" ]; then
+            :
+          elif [ -n "$HOSTKEY" ]; then
             printf '%s\n' "$HOSTKEY" > "$RUNNER_TEMP/known_hosts"
             hostpruefung="-o UserKnownHostsFile=$RUNNER_TEMP/known_hosts -o StrictHostKeyChecking=yes"
           else
@@ -229,10 +236,21 @@ jobs:
           # Ohne das Komma fragt lftp interaktiv nach, findet auf einem Läufer
           # kein Terminal und meldet "GetPass() failed -- assume anonymous
           # login" — die Anmeldung scheitert dann, obwohl der Schlüssel stimmt.
-          if [ -n "$schluessel" ]; then
-            anmeldung="open -u \"$BENUTZER\",\"\" $PROTOKOLL://$HOST"
+          #
+          # FTPS wird als ftp:// geöffnet, nicht als ftps://. In lftp heißt
+          # ftps:// IMPLIZITES TLS auf Port 990 — das bieten Plesk und netcup
+          # nicht an, der Lauf endete mit "Connection refused". Gängig ist
+          # EXPLIZITES TLS: Port 21, Umschalten per AUTH TLS. Dass dabei nie
+          # unverschlüsselt übertragen wird, erzwingt ftp:ssl-force oben.
+          if [ "$PROTOKOLL" = "ftps" ]; then
+            schema="ftp"
           else
-            anmeldung="open -u \"$BENUTZER\",\"$PASSWORT\" $PROTOKOLL://$HOST"
+            schema="$PROTOKOLL"
+          fi
+          if [ -n "$schluessel" ]; then
+            anmeldung="open -u \"$BENUTZER\",\"\" $schema://$HOST"
+          else
+            anmeldung="open -u \"$BENUTZER\",\"$PASSWORT\" $schema://$HOST"
           fi
 
           # Die Befehle in eine Datei, nicht über /dev/stdin: `lftp -f` erwartet

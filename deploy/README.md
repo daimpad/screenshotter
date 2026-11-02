@@ -59,7 +59,7 @@ Unter **Settings → Secrets and variables → Actions** eintragen:
 | Secret | `DEPLOY_SSH_KEY` | privater Schlüssel — **oder** stattdessen: |
 | Secret | `DEPLOY_PASSWORT` | Passwort |
 | Variable | `DEPLOY_PFAD` | Zielordner, **relativ zum Anmeldeverzeichnis**. Ohne Angabe: `httpdocs/screenshots` |
-| Variable | `DEPLOY_PROTOKOLL` | `sftp` (Vorgabe) oder `ftps` |
+| Variable | `DEPLOY_PROTOKOLL` | `sftp` (Vorgabe) oder `ftps` — explizites TLS auf Port 21, wie bei Plesk |
 | Variable | `DEPLOY_HOSTKEY` | Rechnerschlüssel des Servers, siehe unten |
 | Variable | `DEPLOY_QUELLE` | `report` (Vorgabe) oder `docs` |
 | Variable | `DEPLOY_TITEL` | Überschrift im Report, Vorgabe `Screenshots` |
