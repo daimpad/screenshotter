@@ -174,6 +174,11 @@ Entscheidungen:
   kopiert — `cp -r docs veroeffentlichung` auf einen schon vorhandenen Ordner
   legte `docs/` sonst hinein statt daneben. Der Prüfschritt sieht dann unter
   `/report/report.json` nach und ruft zusätzlich die Startseite ab.
+* **Kein Zeitplan, dafür ein Eingabefeld.** Beide Workflows laufen nur noch
+  auf Push bzw. von Hand; die `schedule`-Zeilen stehen auskommentiert im Kopf.
+  `deploy.yml` hat ein Feld `urls`, das für einen Lauf `urls.txt` ersetzt. Es
+  kommt über `env` in den Schritt, **nie** als `${{ inputs.urls }}` in den
+  Befehl — sonst würde aus einem Feldinhalt wie `$(…)` ausführbare Shell.
 * **Still übersprungen wird nur, wer diesen Weg nicht nutzt.** Ohne Secrets
   überspringt der nächtliche Lauf mit einer Warnung — aber nur, solange weder
   `DEPLOY_URL` noch `DEPLOY_PFAD` gesetzt ist. Ist eins davon da, ist der Weg

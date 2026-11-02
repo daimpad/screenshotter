@@ -415,7 +415,7 @@ aus `urls.txt` auf einem GitHub-Läufer auf und veröffentlicht das Ergebnis:
 /report/   der frisch aufgenommene Report
 ```
 
-Ausgelöst wird das bei jedem Push auf `main` und nachts um 3:40 UTC. Keine
+Ausgelöst wird das bei jedem Push auf `main` und von Hand. Keine
 Secrets, kein Server, kein Passwort — die URLs in `urls.txt` eintragen genügt.
 
 Zwei Dinge, die dabei leicht übersehen werden:
@@ -468,11 +468,11 @@ Zwei Angaben, an denen es erfahrungsgemäß hängt:
   trotzdem in einem Verzeichnis ablegen, das der Webserver nie ausliefert —
   grüner Lauf, leere Seite.
 
-Nachts läuft der Weg von selbst. Solange weder `DEPLOY_URL` noch `DEPLOY_PFAD`
-gesetzt ist, überspringt er sich mit einer Warnung — wer ihn nicht nutzt, soll
-keine tägliche Fehlermeldung bekommen. Ist eins davon gesetzt, wird ein Lauf mit
-fehlenden Zugangsdaten **rot**: dann ist der Weg gewollt, und ein Ausfall soll
-auffallen.
+Gestartet wird von Hand: **Actions → Deploy → Run workflow**. Dort gibt es ein
+Feld **„URLs"** — Adressen mit Leerzeichen oder Komma getrennt eintragen, und der
+Lauf nimmt genau diese, nur dieses eine Mal. Leer gelassen nimmt er `urls.txt`.
+Einen Zeitplan hat der Workflow nicht; wer einen nächtlichen Lauf will, findet
+die Zeile dafür auskommentiert im Kopf von `deploy.yml`.
 
 Gespiegelt wird mit `--delete`, damit Bilder gelöschter Seiten verschwinden.
 `DEPLOY_PFAD` muss deshalb ein eigener Ordner sein — oder das Webverzeichnis
